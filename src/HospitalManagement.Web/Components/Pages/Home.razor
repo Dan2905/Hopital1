@@ -3,67 +3,111 @@
 <PageTitle>Tableau de bord</PageTitle>
 
 <div class="dashboard-shell">
-    <div class="dashboard-header">
-        <div class="header-row">
-            <div>
-                <p class="eyebrow">Aperçu général</p>
-                <h2>Tableau de bord</h2>
+    <div class="dashboard-panel">
+        <div class="panel-topbar">
+            <div class="page-heading">
+                <h1>Tableau de bord</h1>
+                <span>Vue d'ensemble de l'établissement</span>
             </div>
-            <div class="header-badges">
-                <span class="status-badge online">En ligne</span>
-                <span class="status-badge warning">Système stable</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="stat-grid">
-        <div class="stat-card card-blue">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="person" Size="18" /></span>
-                <span class="stat-tag">Patients</span>
+            <div class="toolbar">
+                <div class="search-box">
+                    <RadzenIcon Icon="search" IconColor="#7a8b9d" Size="18" />
+                    <span>Rechercher...</span>
+                </div>
+                <div class="avatar-badge">AL</div>
             </div>
-            <div class="stat-num">@patientCount</div>
-            <div class="stat-label">Total patients</div>
         </div>
-        <div class="stat-card card-purple">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="event" Size="18" /></span>
-                <span class="stat-tag">Agenda</span>
+
+        <div class="overview-wrap">
+            <div class="overview-header">
+                <div class="section-kicker">APERÇU GÉNÉRAL</div>
+                <div class="status-group">
+                    <span class="status-badge success">En ligne</span>
+                    <span class="status-badge neutral">Système stable</span>
+                </div>
             </div>
-            <div class="stat-num">@rdvCount</div>
-            <div class="stat-label">Rendez-vous</div>
+
+            <div class="date-label">Jeudi 10 septembre 2026</div>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="person" Size="18" /></span>
+                        <span class="stat-title">PATIENTS</span>
+                    </div>
+                    <div class="stat-num">@patientCount</div>
+                    <div class="stat-label">Aucun patient actif</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="event" Size="18" /></span>
+                        <span class="stat-title">RENDEZ-VOUS</span>
+                    </div>
+                    <div class="stat-num">@rdvCount</div>
+                    <div class="stat-label">Aujourd'hui</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="bed" Size="18" /></span>
+                        <span class="stat-title">ADMISSIONS</span>
+                    </div>
+                    <div class="stat-num">@admissionCount</div>
+                    <div class="stat-label">Entrées ce jour</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="credit_card" Size="18" /></span>
+                        <span class="stat-title">FACTURES</span>
+                    </div>
+                    <div class="stat-num">0 €</div>
+                    <div class="stat-label">Total journalier</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="medication" Size="18" /></span>
+                        <span class="stat-title">PHARMACIE</span>
+                    </div>
+                    <div class="stat-num">@medicamentCount</div>
+                    <div class="stat-label">Rupture de stock</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-head">
+                        <span class="mini-icon"><RadzenIcon Icon="science" Size="18" /></span>
+                        <span class="stat-title">ANALYSES</span>
+                    </div>
+                    <div class="stat-num">@analyseCount</div>
+                    <div class="stat-label">Résultats en attente</div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card card-green">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="bed" Size="18" /></span>
-                <span class="stat-tag">Hospitalisation</span>
+
+        <div class="bottom-grid">
+            <div class="schedule-panel panel-card">
+                <div class="panel-header">
+                    <h3>Rendez-vous du jour</h3>
+                    <button class="panel-action">Planifier</button>
+                </div>
+                <div class="empty-state">
+                    <div class="empty-icon"><RadzenIcon Icon="event_note" Size="32" /></div>
+                    <p>Les prochaines consultations apparaîtront ici.</p>
+                </div>
             </div>
-            <div class="stat-num">@admissionCount</div>
-            <div class="stat-label">Admissions</div>
-        </div>
-        <div class="stat-card card-orange">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="payments" Size="18" /></span>
-                <span class="stat-tag">Finances</span>
+
+            <div class="activity-panel panel-card">
+                <div class="panel-header">
+                    <h3>Activité récente</h3>
+                </div>
+                <div class="empty-state compact">
+                    <div class="empty-icon muted"><RadzenIcon Icon="show_chart" Size="28" /></div>
+                    <p>Aucune activité enregistrée aujourd'hui.</p>
+                </div>
             </div>
-            <div class="stat-num">@factureCount</div>
-            <div class="stat-label">Factures</div>
-        </div>
-        <div class="stat-card card-rose">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="medication" Size="18" /></span>
-                <span class="stat-tag">Pharmacie</span>
-            </div>
-            <div class="stat-num">@medicamentCount</div>
-            <div class="stat-label">Médicaments</div>
-        </div>
-        <div class="stat-card card-cyan">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="science" Size="18" /></span>
-                <span class="stat-tag">Lab</span>
-            </div>
-            <div class="stat-num">@analyseCount</div>
-            <div class="stat-label">Analyses</div>
         </div>
     </div>
 </div>
