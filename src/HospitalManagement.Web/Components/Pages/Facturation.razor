@@ -1,0 +1,148 @@
+@page "/facturation"
+
+<PageTitle>Facturation</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Facturation</RadzenHeading>
+        <RadzenButton Text="Nouvelle facture" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter une facture" : "Modifier la facture")</RadzenText>
+            <RadzenTextBox @bind-Value="model.Numero" Placeholder="Numéro" />
+            <RadzenLabel Text="Patient" />
+            <RadzenDropDown @bind-Value="model.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" />
+            <RadzenLabel Text="Date d'émission" />
+            <RadzenDatePicker @bind-Value="model.DateEmission" />
+            <RadzenLabel Text="Montant total" />
+            <RadzenNumeric @bind-Value="model.MontantTotal" Format="C2" />
+            <RadzenLabel Text="Montant payé" />
+            <RadzenNumeric @bind-Value="model.MontantPaye" Format="C2" />
+            <RadzenLabel Text="Statut" />
+            <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutFacture>()" />
+            <RadzenTextArea @bind-Value="model.Notes" Placeholder="Notes" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@factures" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Numero" Title="Numéro" />
+                <RadzenDataGridColumn Title="Patient">
+                    <Template>
+                        @(context?.Patient?.Nom + " " + context?.Patient?.Prenom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="DateEmission" Title="Date" FormatString="{0:dd/MM/yyyy}" />
+                <RadzenDataGridColumn Property="MontantTotal" Title="Total" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="MontantPaye" Title="Payé" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="MontantRestant" Title="Restant" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="Statut" Title="Statut" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<Facture> factures = new();
+    private List<Patient> patients = new();
+    private bool isEditing;
+    private int editingId;
+    private Facture model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        factures = await Db.Factures.Include(f => f.Patient).Include(f => f.Consultation).ToListAsync();
+        patients = await Db.Patients.ToListAsync();
+    }
+
+    private void OpenNew()
+    {
+        editingId = 0;
+        model = new Facture { DateEmission = DateTime.Today, Statut = StatutFacture.EnAttente };
+        isEditing = true;
+    }
+
+    private void OpenEdit(Facture f)
+    {
+        editingId = f.Id;
+        model = new Facture
+        {
+            Id = f.Id,
+            Numero = f.Numero,
+            PatientId = f.PatientId,
+            ConsultationId = f.ConsultationId,
+            DateEmission = f.DateEmission,
+            DateEcheance = f.DateEcheance,
+            MontantTotal = f.MontantTotal,
+            MontantPaye = f.MontantPaye,
+            Statut = f.Statut,
+            Notes = f.Notes,
+            CreatedAt = f.CreatedAt
+        };
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId == 0)
+        {
+            Db.Factures.Add(model);
+        }
+        else
+        {
+            var existing = await Db.Factures.FindAsync(editingId);
+            if (existing != null)
+            {
+                existing.Numero = model.Numero;
+                existing.PatientId = model.PatientId;
+                existing.ConsultationId = model.ConsultationId;
+                existing.DateEmission = model.DateEmission;
+                existing.DateEcheance = model.DateEcheance;
+                existing.MontantTotal = model.MontantTotal;
+                existing.MontantPaye = model.MontantPaye;
+                existing.Statut = model.Statut;
+                existing.Notes = model.Notes;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "La facture a été enregistrée.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void Cancel() => isEditing = false;
+
+    private async Task Delete(Facture f)
+    {
+        Db.Factures.Remove(f);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "La facture a été supprimée.");
+        await Load();
+    }
+}

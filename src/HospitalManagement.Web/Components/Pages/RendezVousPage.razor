@@ -1,0 +1,152 @@
+@page "/rendezvous"
+
+<PageTitle>Rendez-vous & Consultations</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Rendez-vous</RadzenHeading>
+        <RadzenButton Text="Nouveau rendez-vous" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un rendez-vous" : "Modifier le rendez-vous")</RadzenText>
+            <RadzenLabel Text="Patient" />
+            <RadzenDropDown @bind-Value="model.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" />
+            <RadzenLabel Text="Médecin / Personnel" />
+            <RadzenDropDown @bind-Value="model.PersonnelId" Data="@personnels" TextProperty="NomComplet" ValueProperty="Id" />
+            <RadzenTextBox @bind-Value="model.Motif" Placeholder="Motif" />
+            <RadzenLabel Text="Date et heure" />
+            <RadzenDatePicker @bind-Value="model.DateHeure" ShowTime="true" />
+            <RadzenLabel Text="Durée (minutes)" />
+            <RadzenNumeric @bind-Value="dureeMinutes" />
+            <RadzenLabel Text="Statut" />
+            <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutRendezVous>()" />
+            <RadzenTextArea @bind-Value="model.Notes" Placeholder="Notes" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@rendezVous" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Title="Patient">
+                    <Template>
+                        @(context?.Patient?.Nom + " " + context?.Patient?.Prenom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Personnel">
+                    <Template>
+                        @(context?.Personnel?.Nom + " " + context?.Personnel?.Prenom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Motif" Title="Motif" />
+                <RadzenDataGridColumn Property="DateHeure" Title="Date / heure" FormatString="{0:dd/MM/yyyy HH:mm}" />
+                <RadzenDataGridColumn Property="Statut" Title="Statut" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<RendezVous> rendezVous = new();
+    private List<Patient> patients = new();
+    private List<Personnel> personnels = new();
+    private bool isEditing;
+    private int editingId;
+    private RendezVous model = new();
+    private int dureeMinutes = 30;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        rendezVous = await Db.RendezVous.Include(r => r.Patient).Include(r => r.Personnel).ToListAsync();
+        patients = await Db.Patients.ToListAsync();
+        personnels = await Db.Personnels.ToListAsync();
+    }
+
+    private void OpenNew()
+    {
+        editingId = 0;
+        model = new RendezVous { DateHeure = DateTime.Today.AddHours(9), Statut = StatutRendezVous.Planifie };
+        dureeMinutes = 30;
+        isEditing = true;
+    }
+
+    private void OpenEdit(RendezVous r)
+    {
+        editingId = r.Id;
+        model = new RendezVous
+        {
+            Id = r.Id,
+            PatientId = r.PatientId,
+            PersonnelId = r.PersonnelId,
+            Motif = r.Motif,
+            DateHeure = r.DateHeure,
+            Duree = r.Duree,
+            Statut = r.Statut,
+            Notes = r.Notes,
+            CreatedAt = r.CreatedAt
+        };
+        dureeMinutes = (int)r.Duree.TotalMinutes;
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        model.Duree = TimeSpan.FromMinutes(dureeMinutes);
+        if (editingId == 0)
+        {
+            Db.RendezVous.Add(model);
+        }
+        else
+        {
+            var existing = await Db.RendezVous.FindAsync(editingId);
+            if (existing != null)
+            {
+                existing.PatientId = model.PatientId;
+                existing.PersonnelId = model.PersonnelId;
+                existing.Motif = model.Motif;
+                existing.DateHeure = model.DateHeure;
+                existing.Duree = model.Duree;
+                existing.Statut = model.Statut;
+                existing.Notes = model.Notes;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le rendez-vous a été enregistré.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void Cancel() => isEditing = false;
+
+    private async Task Delete(RendezVous r)
+    {
+        Db.RendezVous.Remove(r);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le rendez-vous a été supprimé.");
+        await Load();
+    }
+}

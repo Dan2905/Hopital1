@@ -1,0 +1,179 @@
+@page "/chambres"
+
+<PageTitle>Chambres & Lits</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Chambres & Lits</RadzenHeading>
+        <RadzenButton Text="Nouvelle chambre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNewChambre())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingChambreId == 0 ? "Ajouter une chambre" : "Modifier la chambre")</RadzenText>
+            <RadzenTextBox @bind-Value="chambreModel.Numero" Placeholder="Numéro" />
+            <RadzenLabel Text="Étage" />
+            <RadzenNumeric @bind-Value="chambreModel.Etage" />
+            <RadzenLabel Text="Type" />
+            <RadzenDropDown @bind-Value="chambreModel.Type" Data="Enum.GetValues<TypeChambre>()" />
+            <RadzenLabel Text="Statut" />
+            <RadzenDropDown @bind-Value="chambreModel.Statut" Data="Enum.GetValues<StatutChambre>()" />
+            <RadzenLabel Text="Tarif journalier" />
+            <RadzenNumeric @bind-Value="chambreModel.TarifJournalier" Format="C2" />
+            <RadzenTextArea @bind-Value="chambreModel.Description" Placeholder="Description" />
+
+            <RadzenHeading Size="HeadingSize.H5">Lits</RadzenHeading>
+            @if (chambreModel.Id != 0)
+            {
+                @foreach (var lit in lits)
+                {
+                    <RadzenStack Direction="FlexDirection.Row" Gap="8px" AlignItems="AlignItems.Center">
+                        <RadzenTextBox @bind-Value="lit.Numero" Placeholder="N° lit" />
+                        <RadzenDropDown @bind-Value="lit.Statut" Data="Enum.GetValues<StatutLit>()" />
+                        <RadzenCheckBox @bind-Value="lit.EstAdapteEnfant" Text="Adapté enfant" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => RemoveLit(lit))" />
+                    </RadzenStack>
+                }
+                <RadzenButton Text="Ajouter un lit" Icon="add" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="@AddLit" />
+            }
+            else
+            {
+                <RadzenText Text="Enregistrez d'abord la chambre pour ajouter des lits." />
+            }
+
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@SaveChambre" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@CancelChambre" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@chambres" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Numero" Title="Numéro" />
+                <RadzenDataGridColumn Property="Etage" Title="Étage" />
+                <RadzenDataGridColumn Property="Type" Title="Type" />
+                <RadzenDataGridColumn Property="Statut" Title="Statut" />
+                <RadzenDataGridColumn Property="TarifJournalier" Title="Tarif / jour" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="Description" Title="Description" />
+                <RadzenDataGridColumn Title="Lits">
+                    <Template>
+                        @((context as Chambre)?.Lits?.Count ?? 0)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEditChambre(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => DeleteChambre(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<Chambre> chambres = new();
+    private List<Lit> lits = new();
+    private bool isEditing;
+    private int editingChambreId;
+    private Chambre chambreModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        chambres = await Db.Chambres.Include(c => c.Lits).ToListAsync();
+    }
+
+    private void OpenNewChambre()
+    {
+        editingChambreId = 0;
+        chambreModel = new Chambre { Type = TypeChambre.Simple, Statut = StatutChambre.Libre };
+        lits = new();
+        isEditing = true;
+    }
+
+    private void OpenEditChambre(Chambre c)
+    {
+        editingChambreId = c.Id;
+        chambreModel = new Chambre
+        {
+            Id = c.Id,
+            Numero = c.Numero,
+            Etage = c.Etage,
+            Type = c.Type,
+            Statut = c.Statut,
+            TarifJournalier = c.TarifJournalier,
+            Description = c.Description,
+            CreatedAt = c.CreatedAt
+        };
+        lits = c.Lits?.ToList() ?? new();
+        isEditing = true;
+    }
+
+    private void AddLit()
+    {
+        lits.Add(new Lit { Statut = StatutLit.Libre });
+    }
+
+    private void RemoveLit(Lit lit) => lits.Remove(lit);
+
+    private async Task SaveChambre()
+    {
+        if (editingChambreId == 0)
+        {
+            Db.Chambres.Add(chambreModel);
+        }
+        else
+        {
+            var existing = await Db.Chambres.Include(c => c.Lits).FirstOrDefaultAsync(c => c.Id == editingChambreId);
+            if (existing != null)
+            {
+                existing.Numero = chambreModel.Numero;
+                existing.Etage = chambreModel.Etage;
+                existing.Type = chambreModel.Type;
+                existing.Statut = chambreModel.Statut;
+                existing.TarifJournalier = chambreModel.TarifJournalier;
+                existing.Description = chambreModel.Description;
+                existing.UpdatedAt = DateTime.UtcNow;
+
+                // Update/add lits
+                existing.Lits?.Clear();
+            }
+            chambreModel.Id = 0;
+        }
+        await Db.SaveChangesAsync();
+
+        // Handle lits for new chambre or re-add
+        if (editingChambreId == 0)
+        {
+            await Db.SaveChangesAsync();
+        }
+
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "La chambre a été enregistrée.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void CancelChambre() => isEditing = false;
+
+    private async Task DeleteChambre(Chambre c)
+    {
+        Db.Chambres.Remove(c);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "La chambre a été supprimée.");
+        await Load();
+    }
+}

@@ -1,0 +1,151 @@
+@page "/personnel"
+
+<PageTitle>Gestion du Personnel</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Personnel</RadzenHeading>
+        <RadzenButton Text="Nouveau membre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un membre" : "Modifier le membre")</RadzenText>
+            <RadzenTextBox @bind-Value="model.Nom" Placeholder="Nom" />
+            <RadzenTextBox @bind-Value="model.Prenom" Placeholder="Prénom" />
+            <RadzenLabel Text="Type" />
+            <RadzenDropDown @bind-Value="model.Type" Data="Enum.GetValues<TypePersonnel>()" />
+            <RadzenTextBox @bind-Value="model.Matricule" Placeholder="Matricule" />
+            <RadzenTextBox @bind-Value="model.Specialite" Placeholder="Spécialité" />
+            <RadzenTextBox @bind-Value="model.Telephone" Placeholder="Téléphone" />
+            <RadzenTextBox @bind-Value="model.Email" Placeholder="Email" />
+            <RadzenLabel Text="Date d'embauche" />
+            <RadzenDatePicker @bind-Value="model.DateEmbauche" />
+            <RadzenTextBox @bind-Value="model.Adresse" Placeholder="Adresse" />
+            <RadzenCheckBox @bind-Value="model.EstActif" Text="Actif" />
+            <RadzenLabel Text="Département" />
+            <RadzenDropDown @bind-Value="model.DepartementId" Data="@departements" TextProperty="Nom" ValueProperty="Id" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@personnels" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Nom" Title="Nom" />
+                <RadzenDataGridColumn Property="Prenom" Title="Prénom" />
+                <RadzenDataGridColumn Property="Type" Title="Type" />
+                <RadzenDataGridColumn Property="Matricule" Title="Matricule" />
+                <RadzenDataGridColumn Property="Specialite" Title="Spécialité" />
+                <RadzenDataGridColumn Property="Telephone" Title="Téléphone" />
+                <RadzenDataGridColumn Property="Email" Title="Email" />
+                <RadzenDataGridColumn Property="EstActif" Title="Actif" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<Personnel> personnels = new();
+    private List<Departement> departements = new();
+    private bool isEditing;
+    private int editingId;
+    private Personnel model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        personnels = await Db.Personnels.Include(p => p.Departement).ToListAsync();
+        departements = await Db.Departements.ToListAsync();
+    }
+
+    private void OpenNew()
+    {
+        editingId = 0;
+        model = new Personnel { Type = TypePersonnel.Medecin, EstActif = true };
+        isEditing = true;
+    }
+
+    private void OpenEdit(Personnel p)
+    {
+        editingId = p.Id;
+        model = new Personnel
+        {
+            Id = p.Id,
+            Nom = p.Nom,
+            Prenom = p.Prenom,
+            Type = p.Type,
+            Matricule = p.Matricule,
+            Specialite = p.Specialite,
+            Telephone = p.Telephone,
+            Email = p.Email,
+            DateEmbauche = p.DateEmbauche,
+            Adresse = p.Adresse,
+            EstActif = p.EstActif,
+            DepartementId = p.DepartementId,
+            CreatedAt = p.CreatedAt
+        };
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId == 0)
+        {
+            Db.Personnels.Add(model);
+        }
+        else
+        {
+            var existing = await Db.Personnels.FindAsync(editingId);
+            if (existing != null)
+            {
+                existing.Nom = model.Nom;
+                existing.Prenom = model.Prenom;
+                existing.Type = model.Type;
+                existing.Matricule = model.Matricule;
+                existing.Specialite = model.Specialite;
+                existing.Telephone = model.Telephone;
+                existing.Email = model.Email;
+                existing.DateEmbauche = model.DateEmbauche;
+                existing.Adresse = model.Adresse;
+                existing.EstActif = model.EstActif;
+                existing.DepartementId = model.DepartementId;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le membre a été enregistré.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void Cancel() => isEditing = false;
+
+    private async Task Delete(Personnel p)
+    {
+        Db.Personnels.Remove(p);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le membre a été supprimé.");
+        await Load();
+    }
+}

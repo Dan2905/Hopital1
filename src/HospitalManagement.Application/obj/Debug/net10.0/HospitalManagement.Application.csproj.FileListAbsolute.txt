@@ -1,0 +1,15 @@
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\bin\Debug\net10.0\HospitalManagement.Application.deps.json
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\bin\Debug\net10.0\HospitalManagement.Application.dll
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\bin\Debug\net10.0\HospitalManagement.Application.pdb
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\bin\Debug\net10.0\HospitalManagement.Domain.dll
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\bin\Debug\net10.0\HospitalManagement.Domain.pdb
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.csproj.AssemblyReference.cache
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.AssemblyInfoInputs.cache
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.AssemblyInfo.cs
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.csproj.CoreCompileInputs.cache
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\Hospital.86C33EBC.Up2Date
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.dll
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\refint\HospitalManagement.Application.dll
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\HospitalManagement.Application.pdb
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Application\obj\Debug\net10.0\ref\HospitalManagement.Application.dll

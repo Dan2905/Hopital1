@@ -1,0 +1,91 @@
+﻿@page "/"
+
+<PageTitle>Tableau de bord</PageTitle>
+
+<div class="dashboard-shell">
+    <div class="dashboard-header">
+        <div class="header-row">
+            <div>
+                <p class="eyebrow">Aperçu général</p>
+                <h2>Tableau de bord</h2>
+            </div>
+            <div class="header-badges">
+                <span class="status-badge online">En ligne</span>
+                <span class="status-badge warning">Système stable</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card card-blue">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="person" Size="18" /></span>
+                <span class="stat-tag">Patients</span>
+            </div>
+            <div class="stat-num">@patientCount</div>
+            <div class="stat-label">Total patients</div>
+        </div>
+        <div class="stat-card card-purple">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="event" Size="18" /></span>
+                <span class="stat-tag">Agenda</span>
+            </div>
+            <div class="stat-num">@rdvCount</div>
+            <div class="stat-label">Rendez-vous</div>
+        </div>
+        <div class="stat-card card-green">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="bed" Size="18" /></span>
+                <span class="stat-tag">Hospitalisation</span>
+            </div>
+            <div class="stat-num">@admissionCount</div>
+            <div class="stat-label">Admissions</div>
+        </div>
+        <div class="stat-card card-orange">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="payments" Size="18" /></span>
+                <span class="stat-tag">Finances</span>
+            </div>
+            <div class="stat-num">@factureCount</div>
+            <div class="stat-label">Factures</div>
+        </div>
+        <div class="stat-card card-rose">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="medication" Size="18" /></span>
+                <span class="stat-tag">Pharmacie</span>
+            </div>
+            <div class="stat-num">@medicamentCount</div>
+            <div class="stat-label">Médicaments</div>
+        </div>
+        <div class="stat-card card-cyan">
+            <div class="stat-topline">
+                <span class="mini-icon"><RadzenIcon Icon="science" Size="18" /></span>
+                <span class="stat-tag">Lab</span>
+            </div>
+            <div class="stat-num">@analyseCount</div>
+            <div class="stat-label">Analyses</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    private int patientCount;
+    private int rdvCount;
+    private int admissionCount;
+    private int factureCount;
+    private int medicamentCount;
+    private int analyseCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        patientCount = await Db.Patients.CountAsync();
+        rdvCount = await Db.RendezVous.CountAsync();
+        admissionCount = await Db.Admissions.CountAsync();
+        factureCount = await Db.Factures.CountAsync();
+        medicamentCount = await Db.Medicaments.CountAsync();
+        analyseCount = await Db.Analyses.CountAsync();
+    }
+}

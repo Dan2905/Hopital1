@@ -1,0 +1,155 @@
+@page "/patients"
+
+<PageTitle>Gestion des Patients</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Patients</RadzenHeading>
+        <RadzenButton Text="Nouveau patient" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un patient" : "Modifier le patient")</RadzenText>
+            <RadzenTextBox @bind-Value="model.Nom" Placeholder="Nom" />
+            <RadzenTextBox @bind-Value="model.Prenom" Placeholder="Prénom" />
+            <RadzenLabel Text="Date de naissance" />
+            <RadzenDatePicker @bind-Value="model.DateNaissance" />
+            <RadzenLabel Text="Sexe" />
+            <RadzenDropDown @bind-Value="model.Sexe" Data="Enum.GetValues<Sexe>()" />
+            <RadzenTextBox @bind-Value="model.NumeroDossier" Placeholder="Numéro de dossier" />
+            <RadzenTextBox @bind-Value="model.Telephone" Placeholder="Téléphone" />
+            <RadzenTextBox @bind-Value="model.Email" Placeholder="Email" />
+            <RadzenTextBox @bind-Value="model.Adresse" Placeholder="Adresse" />
+            <RadzenLabel Text="Groupe sanguin" />
+            <RadzenDropDown @bind-Value="model.GroupeSanguin" Data="Enum.GetValues<GroupeSanguin>()" />
+            <RadzenTextArea @bind-Value="model.Allergies" Placeholder="Allergies" />
+            <RadzenTextArea @bind-Value="model.AntecedentsMedicaux" Placeholder="Antécédents médicaux" />
+            <RadzenLabel Text="Statut" />
+            <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutPatient>()" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@patients" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Nom" Title="Nom" />
+                <RadzenDataGridColumn Property="Prenom" Title="Prénom" />
+                <RadzenDataGridColumn Property="DateNaissance" Title="Naissance" FormatString="{0:dd/MM/yyyy}" />
+                <RadzenDataGridColumn Property="Sexe" Title="Sexe" />
+                <RadzenDataGridColumn Property="NumeroDossier" Title="N° Dossier" />
+                <RadzenDataGridColumn Property="Telephone" Title="Téléphone" />
+                <RadzenDataGridColumn Property="Email" Title="Email" />
+                <RadzenDataGridColumn Property="Statut" Title="Statut" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<Patient> patients = new();
+    private bool isEditing;
+    private int editingId;
+    private Patient model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        patients = await Db.Patients
+            .Include(p => p.DossierMedical)
+            .ToListAsync();
+    }
+
+    private void OpenNew()
+    {
+        editingId = 0;
+        model = new Patient { DateNaissance = DateTime.Today, Statut = StatutPatient.Actif };
+        isEditing = true;
+    }
+
+    private void OpenEdit(Patient p)
+    {
+        editingId = p.Id;
+        model = new Patient
+        {
+            Id = p.Id,
+            Nom = p.Nom,
+            Prenom = p.Prenom,
+            DateNaissance = p.DateNaissance,
+            Sexe = p.Sexe,
+            NumeroDossier = p.NumeroDossier,
+            Telephone = p.Telephone,
+            Email = p.Email,
+            Adresse = p.Adresse,
+            GroupeSanguin = p.GroupeSanguin,
+            Allergies = p.Allergies,
+            AntecedentsMedicaux = p.AntecedentsMedicaux,
+            Statut = p.Statut,
+            CreatedAt = p.CreatedAt
+        };
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId == 0)
+        {
+            Db.Patients.Add(model);
+        }
+        else
+        {
+            var existing = await Db.Patients.FindAsync(editingId);
+            if (existing != null)
+            {
+                existing.Nom = model.Nom;
+                existing.Prenom = model.Prenom;
+                existing.DateNaissance = model.DateNaissance;
+                existing.Sexe = model.Sexe;
+                existing.NumeroDossier = model.NumeroDossier;
+                existing.Telephone = model.Telephone;
+                existing.Email = model.Email;
+                existing.Adresse = model.Adresse;
+                existing.GroupeSanguin = model.GroupeSanguin;
+                existing.Allergies = model.Allergies;
+                existing.AntecedentsMedicaux = model.AntecedentsMedicaux;
+                existing.Statut = model.Statut;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le patient a été enregistré.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void Cancel() => isEditing = false;
+
+    private async Task Delete(Patient p)
+    {
+        Db.Patients.Remove(p);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le patient a été supprimé.");
+        await Load();
+    }
+}

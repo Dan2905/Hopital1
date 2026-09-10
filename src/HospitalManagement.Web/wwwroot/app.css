@@ -1,0 +1,311 @@
+html, body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: linear-gradient(180deg, #0b1220 0%, #101b2d 100%);
+    color: #e9f2ff;
+}
+
+body {
+    min-height: 100vh;
+}
+
+.rz-layout {
+    min-height: 100vh;
+}
+
+.rz-header {
+    background: rgba(12, 18, 28, 0.95) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    backdrop-filter: blur(10px);
+}
+
+.header-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #edf6ff;
+}
+
+.rz-body {
+    padding: 28px;
+    background: transparent;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #f5f9ff;
+    font-size: 1.12rem;
+    font-weight: 700;
+    padding: 22px 16px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.brand-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3ba7ff 0%, #7f7bff 100%);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 8px 18px rgba(79, 136, 255, 0.35);
+}
+
+.rz-sidebar {
+    background: linear-gradient(180deg, #0e1a2a 0%, #0e1723 100%) !important;
+    border-right: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 6px 0 18px rgba(0,0,0,0.22);
+}
+
+.premium-menu {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.menu-section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7d9bb9;
+    font-weight: 700;
+    padding: 6px 10px 10px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #edf6ff;
+    font-weight: 600;
+    background: transparent;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(92, 169, 255, 0.15), rgba(124, 237, 211, 0.06));
+    transform: translateX(2px);
+    border-color: rgba(110, 178, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(143, 214, 255, 0.08);
+}
+
+.nav-icon {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(10,14,20,0.5);
+}
+
+.dashboard-shell {
+    max-width: 1200px;
+}
+
+.dashboard-header {
+    margin-bottom: 22px;
+    padding: 8px 8px 0;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #85b9ff;
+    font-weight: 700;
+}
+
+.dashboard-header h2 {
+    margin: 0;
+    font-size: 2.15rem;
+    color: #f2f8ff;
+    font-weight: 800;
+}
+
+.header-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+}
+
+.status-badge.online {
+    background: rgba(39, 211, 134, 0.12);
+    border-color: rgba(39, 211, 134, 0.25);
+    color: #8ff0bf;
+}
+
+.status-badge.warning {
+    background: rgba(255, 181, 70, 0.12);
+    border-color: rgba(255, 181, 70, 0.25);
+    color: #ffd78a;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    min-height: 180px;
+    padding: 18px 18px 20px;
+    border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 15px 32px rgba(0,0,0,0.18);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    animation: fadeUp 0.45s ease both;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 38px rgba(69, 116, 196, 0.14);
+}
+
+.card-blue {
+    background: linear-gradient(135deg, rgba(31, 117, 255, 0.9), rgba(73, 162, 255, 0.7));
+}
+
+.card-purple {
+    background: linear-gradient(135deg, rgba(132, 79, 255, 0.9), rgba(164, 118, 255, 0.7));
+}
+
+.card-green {
+    background: linear-gradient(135deg, rgba(24, 194, 148, 0.9), rgba(54, 215, 182, 0.7));
+}
+
+.card-orange {
+    background: linear-gradient(135deg, rgba(255, 163, 51, 0.92), rgba(255, 196, 89, 0.72));
+}
+
+.card-rose {
+    background: linear-gradient(135deg, rgba(255, 86, 146, 0.9), rgba(255, 138, 180, 0.72));
+}
+
+.card-cyan {
+    background: linear-gradient(135deg, rgba(35, 180, 225, 0.9), rgba(76, 214, 255, 0.72));
+}
+
+.stat-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.mini-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.14);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+}
+
+.stat-num {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.03;
+    color: #ffffff;
+    margin-bottom: 6px;
+    text-shadow: 0 4px 18px rgba(0,0,0,0.14);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.86);
+    font-weight: 600;
+}
+
+.page-card {
+    background: #ffffff;
+    border: 1px solid #e3e8ef;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+}
+
+.rz-datagrid {
+    background: #ffffff;
+}
+
+#blazor-error-ui {
+    background: #fff3cd;
+    border-top: 1px solid #ffe69c;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

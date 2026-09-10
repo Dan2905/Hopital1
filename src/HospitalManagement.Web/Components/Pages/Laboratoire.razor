@@ -1,0 +1,246 @@
+@page "/laboratoire"
+
+<PageTitle>Laboratoire</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Laboratoire</RadzenHeading>
+    </RadzenStack>
+
+    <RadzenHeading Size="HeadingSize.H5">Catalogue des examens</RadzenHeading>
+    <RadzenStack Direction="FlexDirection.Row" Gap="8px" Style="margin-bottom: 12px;">
+        <RadzenButton Text="Nouvel examen" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenNewExamen())" />
+    </RadzenStack>
+    @if (isEditingExamen)
+    {
+        <RadzenStack Gap="12px" Style="margin-bottom: 24px;">
+            <RadzenTextBox @bind-Value="examenModel.Nom" Placeholder="Nom" />
+            <RadzenTextBox @bind-Value="examenModel.Code" Placeholder="Code" />
+            <RadzenLabel Text="Type" />
+            <RadzenDropDown @bind-Value="examenModel.Type" Data="Enum.GetValues<TypeExamen>()" />
+            <RadzenTextBox @bind-Value="examenModel.Description" Placeholder="Description" />
+            <RadzenLabel Text="Prix" />
+            <RadzenNumeric @bind-Value="examenModel.Prix" Format="C2" />
+            <RadzenTextBox @bind-Value="examenModel.Unite" Placeholder="Unité" />
+            <RadzenCheckBox @bind-Value="examenModel.EstActif" Text="Actif" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@SaveExamen" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@(() => isEditingExamen = false)" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@examens" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Nom" Title="Nom" />
+                <RadzenDataGridColumn Property="Code" Title="Code" />
+                <RadzenDataGridColumn Property="Type" Title="Type" />
+                <RadzenDataGridColumn Property="Prix" Title="Prix" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="Unite" Title="Unité" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEditExamen(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => DeleteExamen(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+
+    <RadzenHeading Size="HeadingSize.H5" Style="margin-top: 32px;">Analyses</RadzenHeading>
+    <RadzenStack Direction="FlexDirection.Row" Gap="8px" Style="margin-bottom: 12px;">
+        <RadzenButton Text="Nouvelle analyse" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenNewAnalyse())" />
+    </RadzenStack>
+    @if (isEditingAnalyse)
+    {
+        <RadzenStack Gap="12px" Style="margin-bottom: 24px;">
+            <RadzenLabel Text="Patient" />
+            <RadzenDropDown @bind-Value="analyseModel.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" />
+            <RadzenLabel Text="Examen" />
+            <RadzenDropDown @bind-Value="analyseModel.ExamenLaboratoireId" Data="@examens" TextProperty="Nom" ValueProperty="Id" />
+            <RadzenLabel Text="Date de demande" />
+            <RadzenDatePicker @bind-Value="analyseModel.DateDemande" />
+            <RadzenLabel Text="Statut" />
+            <RadzenDropDown @bind-Value="analyseModel.Statut" Data="Enum.GetValues<StatutAnalyse>()" />
+            <RadzenTextArea @bind-Value="analyseModel.Notes" Placeholder="Notes" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@SaveAnalyse" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@(() => isEditingAnalyse = false)" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@analyses" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Title="Patient">
+                    <Template>
+                        @(context?.Patient?.Nom + " " + context?.Patient?.Prenom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Examen">
+                    <Template>
+                        @(context?.ExamenLaboratoire?.Nom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="DateDemande" Title="Date" FormatString="{0:dd/MM/yyyy}" />
+                <RadzenDataGridColumn Property="Statut" Title="Statut" />
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEditAnalyse(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => DeleteAnalyse(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<ExamenLaboratoire> examens = new();
+    private List<Analyse> analyses = new();
+    private List<Patient> patients = new();
+    private bool isEditingExamen;
+    private int editingExamenId;
+    private ExamenLaboratoire examenModel = new();
+    private bool isEditingAnalyse;
+    private int editingAnalyseId;
+    private Analyse analyseModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        examens = await Db.ExamensLaboratoire.ToListAsync();
+        analyses = await Db.Analyses.Include(a => a.Patient).Include(a => a.ExamenLaboratoire).ToListAsync();
+        patients = await Db.Patients.ToListAsync();
+    }
+
+    private void OpenNewExamen()
+    {
+        editingExamenId = 0;
+        examenModel = new ExamenLaboratoire { Type = TypeExamen.Autre, EstActif = true };
+        isEditingExamen = true;
+    }
+
+    private void OpenEditExamen(ExamenLaboratoire e)
+    {
+        editingExamenId = e.Id;
+        examenModel = new ExamenLaboratoire
+        {
+            Id = e.Id,
+            Nom = e.Nom,
+            Code = e.Code,
+            Type = e.Type,
+            Description = e.Description,
+            Prix = e.Prix,
+            Unite = e.Unite,
+            EstActif = e.EstActif,
+            CreatedAt = e.CreatedAt
+        };
+        isEditingExamen = true;
+    }
+
+    private async Task SaveExamen()
+    {
+        if (editingExamenId == 0)
+            Db.ExamensLaboratoire.Add(examenModel);
+        else
+        {
+            var existing = await Db.ExamensLaboratoire.FindAsync(editingExamenId);
+            if (existing != null)
+            {
+                existing.Nom = examenModel.Nom;
+                existing.Code = examenModel.Code;
+                existing.Type = examenModel.Type;
+                existing.Description = examenModel.Description;
+                existing.Prix = examenModel.Prix;
+                existing.Unite = examenModel.Unite;
+                existing.EstActif = examenModel.EstActif;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "L'examen a été enregistré.");
+        isEditingExamen = false;
+        await Load();
+    }
+
+    private async Task DeleteExamen(ExamenLaboratoire e)
+    {
+        Db.ExamensLaboratoire.Remove(e);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "L'examen a été supprimé.");
+        await Load();
+    }
+
+    private void OpenNewAnalyse()
+    {
+        editingAnalyseId = 0;
+        analyseModel = new Analyse { DateDemande = DateTime.Today, Statut = StatutAnalyse.EnAttente };
+        isEditingAnalyse = true;
+    }
+
+    private void OpenEditAnalyse(Analyse a)
+    {
+        editingAnalyseId = a.Id;
+        analyseModel = new Analyse
+        {
+            Id = a.Id,
+            PatientId = a.PatientId,
+            ConsultationId = a.ConsultationId,
+            PersonnelId = a.PersonnelId,
+            ExamenLaboratoireId = a.ExamenLaboratoireId,
+            DateDemande = a.DateDemande,
+            DateResultat = a.DateResultat,
+            Statut = a.Statut,
+            Notes = a.Notes,
+            CreatedAt = a.CreatedAt
+        };
+        isEditingAnalyse = true;
+    }
+
+    private async Task SaveAnalyse()
+    {
+        if (editingAnalyseId == 0)
+            Db.Analyses.Add(analyseModel);
+        else
+        {
+            var existing = await Db.Analyses.FindAsync(editingAnalyseId);
+            if (existing != null)
+            {
+                existing.PatientId = analyseModel.PatientId;
+                existing.ConsultationId = analyseModel.ConsultationId;
+                existing.PersonnelId = analyseModel.PersonnelId;
+                existing.ExamenLaboratoireId = analyseModel.ExamenLaboratoireId;
+                existing.DateDemande = analyseModel.DateDemande;
+                existing.DateResultat = analyseModel.DateResultat;
+                existing.Statut = analyseModel.Statut;
+                existing.Notes = analyseModel.Notes;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "L'analyse a été enregistrée.");
+        isEditingAnalyse = false;
+        await Load();
+    }
+
+    private async Task DeleteAnalyse(Analyse a)
+    {
+        Db.Analyses.Remove(a);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "L'analyse a été supprimée.");
+        await Load();
+    }
+}

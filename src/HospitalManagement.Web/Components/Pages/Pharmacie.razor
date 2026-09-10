@@ -1,0 +1,161 @@
+@page "/pharmacie"
+
+<PageTitle>Pharmacie</PageTitle>
+
+<div class="page-card">
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
+        <RadzenHeading Size="HeadingSize.H3">Pharmacie</RadzenHeading>
+        <RadzenButton Text="Nouveau médicament" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+    </RadzenStack>
+
+    @if (isEditing)
+    {
+        <RadzenStack Gap="16px">
+            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un médicament" : "Modifier le médicament")</RadzenText>
+            <RadzenTextBox @bind-Value="model.Nom" Placeholder="Nom" />
+            <RadzenTextBox @bind-Value="model.Code" Placeholder="Code" />
+            <RadzenTextBox @bind-Value="model.Dosage" Placeholder="Dosage" />
+            <RadzenTextBox @bind-Value="model.Forme" Placeholder="Forme" />
+            <RadzenTextBox @bind-Value="model.Fabricant" Placeholder="Fabricant" />
+            <RadzenLabel Text="Prix d'achat" />
+            <RadzenNumeric @bind-Value="model.PrixAchat" Format="C2" />
+            <RadzenLabel Text="Prix de vente" />
+            <RadzenNumeric @bind-Value="model.PrixVente" Format="C2" />
+            <RadzenLabel Text="Quantité en stock" />
+            <RadzenNumeric @bind-Value="model.QuantiteStock" />
+            <RadzenLabel Text="Seuil d'alerte" />
+            <RadzenNumeric @bind-Value="model.SeuilAlerte" />
+            <RadzenLabel Text="Date de péremption" />
+            <RadzenDatePicker @bind-Value="model.DatePeremption" />
+            <RadzenCheckBox @bind-Value="model.EstActif" Text="Actif" />
+            <RadzenLabel Text="Fournisseur" />
+            <RadzenDropDown @bind-Value="model.FournisseurId" Data="@fournisseurs" TextProperty="Nom" ValueProperty="Id" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+                <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@medicaments" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Nom" Title="Nom" />
+                <RadzenDataGridColumn Property="Code" Title="Code" />
+                <RadzenDataGridColumn Property="Dosage" Title="Dosage" />
+                <RadzenDataGridColumn Property="Forme" Title="Forme" />
+                <RadzenDataGridColumn Property="PrixVente" Title="Prix vente" FormatString="{0:C2}" />
+                <RadzenDataGridColumn Property="QuantiteStock" Title="Stock" />
+                <RadzenDataGridColumn Property="DatePeremption" Title="Péremption" FormatString="{0:dd/MM/yyyy}" />
+                <RadzenDataGridColumn Title="Fournisseur">
+                    <Template>
+                        @(context?.Fournisseur?.Nom)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="">
+                    <Template>
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>
+
+@code {
+    [Inject]
+    private ApplicationDbContext Db { get; set; } = default!;
+
+    [Inject]
+    private NotificationService Notification { get; set; } = default!;
+
+    private List<Medicament> medicaments = new();
+    private List<Fournisseur> fournisseurs = new();
+    private bool isEditing;
+    private int editingId;
+    private Medicament model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        medicaments = await Db.Medicaments.Include(m => m.Fournisseur).ToListAsync();
+        fournisseurs = await Db.Fournisseurs.ToListAsync();
+    }
+
+    private void OpenNew()
+    {
+        editingId = 0;
+        model = new Medicament { EstActif = true, SeuilAlerte = 10 };
+        isEditing = true;
+    }
+
+    private void OpenEdit(Medicament m)
+    {
+        editingId = m.Id;
+        model = new Medicament
+        {
+            Id = m.Id,
+            Nom = m.Nom,
+            Code = m.Code,
+            Dosage = m.Dosage,
+            Forme = m.Forme,
+            Fabricant = m.Fabricant,
+            PrixAchat = m.PrixAchat,
+            PrixVente = m.PrixVente,
+            QuantiteStock = m.QuantiteStock,
+            SeuilAlerte = m.SeuilAlerte,
+            DatePeremption = m.DatePeremption,
+            EstActif = m.EstActif,
+            FournisseurId = m.FournisseurId,
+            CreatedAt = m.CreatedAt
+        };
+        isEditing = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId == 0)
+        {
+            Db.Medicaments.Add(model);
+        }
+        else
+        {
+            var existing = await Db.Medicaments.FindAsync(editingId);
+            if (existing != null)
+            {
+                existing.Nom = model.Nom;
+                existing.Code = model.Code;
+                existing.Dosage = model.Dosage;
+                existing.Forme = model.Forme;
+                existing.Fabricant = model.Fabricant;
+                existing.PrixAchat = model.PrixAchat;
+                existing.PrixVente = model.PrixVente;
+                existing.QuantiteStock = model.QuantiteStock;
+                existing.SeuilAlerte = model.SeuilAlerte;
+                existing.DatePeremption = model.DatePeremption;
+                existing.EstActif = model.EstActif;
+                existing.FournisseurId = model.FournisseurId;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le médicament a été enregistré.");
+        isEditing = false;
+        await Load();
+    }
+
+    private void Cancel() => isEditing = false;
+
+    private async Task Delete(Medicament m)
+    {
+        Db.Medicaments.Remove(m);
+        await Db.SaveChangesAsync();
+        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le médicament a été supprimé.");
+        await Load();
+    }
+}
