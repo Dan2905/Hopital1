@@ -1,0 +1,17 @@
+11750:            Empty or null values are considered valid - combine with <see cref="T:Radzen.Blazor.RadzenRequiredValidator"/> to ensure the field is not empty.
+11772:            &lt;RadzenRequiredValidator Component="Email" Text="Email is required" /&gt;
+12314:                        &lt;RadzenRequiredValidator Component="SearchTerm" Text="Search term is required" /&gt;
+18644:                &lt;RadzenRequiredValidator Component="Password" Text="Password is required" /&gt;
+22142:            The validator passes when the value matches the entire pattern (implicit anchoring). Empty or null values are considered valid - combine with RadzenRequiredValidator to ensure the field is filled.
+22181:        <member name="T:Radzen.Blazor.RadzenRequiredValidator">
+22184:            RadzenRequiredValidator verifies that required fields are filled before form submission.
+22195:              &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;
+22209:            &lt;RadzenRequiredValidator Component="Country" DefaultValue="0" Text="Please select a country" /&gt;
+22213:        <member name="P:Radzen.Blazor.RadzenRequiredValidator.Text">
+22220:        <member name="M:Radzen.Blazor.RadzenRequiredValidator.Validate(Radzen.IRadzenFormComponent)">
+22223:        <member name="P:Radzen.Blazor.RadzenRequiredValidator.DefaultValue">
+26726:               &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;
+26763:               &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;
+26794:               &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;
+26820:              &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;
+26833:              &lt;RadzenRequiredValidator Component="Email" Text="Email is required" Style="position: absolute" /&gt;

@@ -1,0 +1,6 @@
+11744:        <member name="T:Radzen.Blazor.RadzenEmailValidator">
+11747:            RadzenEmailValidator uses the .NET EmailAddressAttribute to validate email format according to standard rules.
+11758:              &lt;RadzenEmailValidator Component="Email" Text="Please enter a valid email address" Style="position: absolute" /&gt;
+11773:            &lt;RadzenEmailValidator Component="Email" Text="Invalid email format" /&gt;
+11777:        <member name="P:Radzen.Blazor.RadzenEmailValidator.Text">
+11784:        <member name="M:Radzen.Blazor.RadzenEmailValidator.Validate(Radzen.IRadzenFormComponent)">

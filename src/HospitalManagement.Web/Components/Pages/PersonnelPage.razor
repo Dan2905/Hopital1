@@ -1,4 +1,5 @@
 @page "/personnel"
+@attribute [Authorize(Roles = "Admin")]
 
 <PageTitle>Gestion du Personnel</PageTitle>
 
@@ -61,6 +62,9 @@
 
     [Inject]
     private NotificationService Notification { get; set; } = default!;
+
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
 
     private List<Personnel> personnels = new();
     private List<Departement> departements = new();
@@ -143,6 +147,11 @@
 
     private async Task Delete(Personnel p)
     {
+        if (!await Dialog.ConfirmDeleteAsync($"le membre {p.NomComplet}"))
+        {
+            return;
+        }
+
         Db.Personnels.Remove(p);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le membre a été supprimé.");

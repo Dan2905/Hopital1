@@ -195,8 +195,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Dialogs/EditUserRolesDialog.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xEaWFsb2dzXEVkaXRVc2VyUm9sZXNEaWFsb2cucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Layout/RoleBadges.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUm9sZUJhZGdlcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/Auth.razor]
@@ -245,6 +257,18 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/RendezVousPage.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZW5kZXpWb3VzUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/RolesManagement.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSb2xlc01hbmFnZW1lbnQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/UserDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc2VyRGV0YWlsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/UserProfile.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc2VyUHJvZmlsZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/divulu/Desktop/Dev/Gestion_Hopital/src/HospitalManagement.Web/Components/Pages/Weather.razor]

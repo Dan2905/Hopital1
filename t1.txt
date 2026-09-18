@@ -1,0 +1,74 @@
+7413:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/> and associated with a named input component.
+7420:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+7424:            &lt;/RadzenTemplateForm&gt;
+7669:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/>.
+7678:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+7683:            &lt;/RadzenTemplateForm&gt;
+7721:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/>.
+7731:            &lt;RadzenTemplateForm TItem="UserModel" Data=@user&gt;
+7734:            &lt;/RadzenTemplateForm&gt;
+11748:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/> and associated with a named input component.
+11756:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+11759:            &lt;/RadzenTemplateForm&gt;
+12307:            &lt;RadzenTemplateForm Data=@model&gt;
+12317:            &lt;/RadzenTemplateForm&gt;
+16109:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/> and associated with a named input component.
+16116:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+16119:            &lt;/RadzenTemplateForm&gt;
+16736:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/>.
+16746:            &lt;RadzenTemplateForm Data=@("Login")&gt;
+16748:            &lt;/RadzenTemplateForm&gt;
+16761:            &lt;RadzenTemplateForm Data=@("Login")&gt;
+16765:            &lt;/RadzenTemplateForm&gt;
+17806:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/>.
+17814:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+17817:            &lt;/RadzenTemplateForm&gt;
+17821:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+17825:            &lt;/RadzenTemplateForm&gt;
+18642:            &lt;RadzenTemplateForm Data=@model&gt;
+18647:            &lt;/RadzenTemplateForm&gt;
+22139:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/>.
+22147:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+22150:            &lt;/RadzenTemplateForm&gt;
+22185:            Must be placed inside a <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/> and associated with a named input component.
+22193:            &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+22196:            &lt;/RadzenTemplateForm&gt;
+26718:        <member name="T:Radzen.Blazor.RadzenTemplateForm`1">
+26724:             &lt;RadzenTemplateForm TItem="Model" Data=@model&gt;
+26727:             &lt;/RadzenTemplateForm&gt;
+26739:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.IsValid">
+26745:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.Data">
+26750:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.ChildContent">
+26755:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.Submit">
+26757:             A callback that will be invoked when the user submits the form and <see cref="P:Radzen.Blazor.RadzenTemplateForm`1.IsValid" /> is <c>true</c>.
+26761:             &lt;RadzenTemplateForm TItem="Model" Submit=@OnSubmit Data=@model&gt;
+26764:             &lt;/RadzenTemplateForm&gt;
+26781:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.OnInvalidSubmit">
+26783:            Obsolete. Use <see cref="P:Radzen.Blazor.RadzenTemplateForm`1.InvalidSubmit" /> instead.
+26786:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.InvalidSubmit">
+26788:             A callback that will be invoked when the user submits the form and <see cref="P:Radzen.Blazor.RadzenTemplateForm`1.IsValid" /> is <c>false</c>.
+26792:             &lt;RadzenTemplateForm TItem="Model" InvalidSubmit=@OnInvalidSubmit Data=@model&gt;
+26795:             &lt;/RadzenTemplateForm&gt;
+26812:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.Method">
+26814:            Specifies the form <c>method</c> attribute. Used together with <see cref="P:Radzen.Blazor.RadzenTemplateForm`1.Action" />.
+26818:            &lt;RadzenTemplateForm TItem="Model" Method="post" Action="/register" Data=@model&gt;
+26821:            &lt;/RadzenTemplateForm&gt;
+26825:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.Action">
+26831:            &lt;RadzenTemplateForm TItem="Model" Method="post" Action="/register" Data=@model&gt;
+26834:            &lt;/RadzenTemplateForm&gt;
+26838:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.#ctor">
+26840:            Initializes a new instance of the <see cref="T:Radzen.Blazor.RadzenTemplateForm`1"/> class.
+26843:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.OnSubmit">
+26848:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.AddComponent(Radzen.IRadzenFormComponent)">
+26851:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.RemoveComponent(Radzen.IRadzenFormComponent)">
+26854:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.FindComponent(System.String)">
+26857:        <member name="P:Radzen.Blazor.RadzenTemplateForm`1.EditContext">
+26863:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.OnParametersSet">
+26866:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.GetComponentCssClass">
+26869:        <member name="M:Radzen.Blazor.RadzenTemplateForm`1.BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder)">
+34161:            Provided by the <see cref="T:Radzen.Blazor.RadzenTemplateForm`1" /> which contains this validator. Used internally.
+42056:            Components inheriting from FormComponent automatically work with RadzenTemplateForm and validators.
+42209:            Supplies information about a <see cref="P:Radzen.Blazor.RadzenTemplateForm`1.InvalidSubmit" /> event that is being raised.
+43094:            Represents the common <see cref="T:Radzen.Blazor.RadzenTemplateForm`1" /> API used by
+43119:            Specifies the interface that form components must implement in order to be supported by <see cref="T:Radzen.Blazor.RadzenTemplateForm`1" />.
+43175:            The interface that a validator component must implement in order to be supported by <see cref="T:Radzen.Blazor.RadzenTemplateForm`1" />.

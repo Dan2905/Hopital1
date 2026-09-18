@@ -1,0 +1,1 @@
+Get-ChildItem -Path 'C:/Users/divulu/Desktop/Dev/Gestion_Hopital' -Recurse -File | Where-Object { \.Name -match '.(cshtml|razor|cs|json|html|css|js|ts|scss)$' } | Sort-Object FullName | ForEach-Object { Write-Output \.FullName}

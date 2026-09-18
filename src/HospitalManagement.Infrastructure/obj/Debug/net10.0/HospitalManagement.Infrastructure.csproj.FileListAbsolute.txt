@@ -11,6 +11,7 @@ C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructur
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.AssemblyInfoInputs.cache
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.AssemblyInfo.cs
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.sourcelink.json
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\Hospital.04B4BFA6.Up2Date
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.dll
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\refint\HospitalManagement.Infrastructure.dll

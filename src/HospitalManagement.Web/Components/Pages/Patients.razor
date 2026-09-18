@@ -1,59 +1,169 @@
 @page "/patients"
+@attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
 
 <PageTitle>Gestion des Patients</PageTitle>
 
-<div class="page-card">
-    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
-        <RadzenHeading Size="HeadingSize.H3">Patients</RadzenHeading>
-        <RadzenButton Text="Nouveau patient" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
-    </RadzenStack>
+<div class="patients-page">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Gestion</p>
+            <h2>Patients</h2>
+        </div>
+        <RadzenButton Text="Nouveau patient" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+    </div>
 
     @if (isEditing)
     {
-        <RadzenStack Gap="16px">
-            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un patient" : "Modifier le patient")</RadzenText>
-            <RadzenTextBox @bind-Value="model.Nom" Placeholder="Nom" />
-            <RadzenTextBox @bind-Value="model.Prenom" Placeholder="Prénom" />
-            <RadzenLabel Text="Date de naissance" />
-            <RadzenDatePicker @bind-Value="model.DateNaissance" />
-            <RadzenLabel Text="Sexe" />
-            <RadzenDropDown @bind-Value="model.Sexe" Data="Enum.GetValues<Sexe>()" />
-            <RadzenTextBox @bind-Value="model.NumeroDossier" Placeholder="Numéro de dossier" />
-            <RadzenTextBox @bind-Value="model.Telephone" Placeholder="Téléphone" />
-            <RadzenTextBox @bind-Value="model.Email" Placeholder="Email" />
-            <RadzenTextBox @bind-Value="model.Adresse" Placeholder="Adresse" />
-            <RadzenLabel Text="Groupe sanguin" />
-            <RadzenDropDown @bind-Value="model.GroupeSanguin" Data="Enum.GetValues<GroupeSanguin>()" />
-            <RadzenTextArea @bind-Value="model.Allergies" Placeholder="Allergies" />
-            <RadzenTextArea @bind-Value="model.AntecedentsMedicaux" Placeholder="Antécédents médicaux" />
-            <RadzenLabel Text="Statut" />
-            <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutPatient>()" />
-            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+        <div class="editor-card">
+            <div class="editor-header">
+                <h3>@(editingId == 0 ? "Ajouter un patient" : "Modifier le patient")</h3>
+            </div>
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label>Nom</label>
+                    <RadzenTextBox @bind-Value="model.Nom" Placeholder="Nom" />
+                </div>
+
+                <div class="field-group">
+                    <label>Prénom</label>
+                    <RadzenTextBox @bind-Value="model.Prenom" Placeholder="Prénom" />
+                </div>
+
+                <div class="field-group">
+                    <label>Date de naissance</label>
+                    <RadzenDatePicker @bind-Value="model.DateNaissance" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Sexe</label>
+                    <RadzenDropDown Data="Enum.GetValues<Sexe>()" @bind-Value="model.Sexe" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Numéro de dossier</label>
+                    <RadzenTextBox @bind-Value="model.NumeroDossier" Placeholder="N° dossier" />
+                </div>
+
+                <div class="field-group">
+                    <label>Téléphone</label>
+                    <RadzenTextBox @bind-Value="model.Telephone" Placeholder="Téléphone" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Email</label>
+                    <RadzenTextBox @bind-Value="model.Email" Placeholder="Email" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Adresse</label>
+                    <RadzenTextBox @bind-Value="model.Adresse" Placeholder="Adresse" />
+                </div>
+
+                <div class="field-group">
+                    <label>Groupe sanguin</label>
+                    <RadzenDropDown Data="Enum.GetValues<GroupeSanguin>()" @bind-Value="model.GroupeSanguin" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Statut</label>
+                    <RadzenDropDown Data="Enum.GetValues<StatutPatient>()" @bind-Value="model.Statut" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Allergies</label>
+                    <RadzenTextArea @bind-Value="model.Allergies" Placeholder="Allergies" Rows="3" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Antécédents médicaux</label>
+                    <RadzenTextArea @bind-Value="model.AntecedentsMedicaux" Placeholder="Antécédents médicaux" Rows="3" />
+                </div>
+            </div>
+
+            <div class="form-actions">
                 <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
-                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
-            </RadzenStack>
-        </RadzenStack>
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+            </div>
+        </div>
     }
     else
     {
-        <RadzenDataGrid Data="@patients" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Nom" Title="Nom" />
-                <RadzenDataGridColumn Property="Prenom" Title="Prénom" />
-                <RadzenDataGridColumn Property="DateNaissance" Title="Naissance" FormatString="{0:dd/MM/yyyy}" />
-                <RadzenDataGridColumn Property="Sexe" Title="Sexe" />
-                <RadzenDataGridColumn Property="NumeroDossier" Title="N° Dossier" />
-                <RadzenDataGridColumn Property="Telephone" Title="Téléphone" />
-                <RadzenDataGridColumn Property="Email" Title="Email" />
-                <RadzenDataGridColumn Property="Statut" Title="Statut" />
-                <RadzenDataGridColumn Title="">
-                    <Template>
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Button" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Button" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
+        <div class="filter-bar">
+            <RadzenTextBox Placeholder="Rechercher un patient..." @bind-Value="searchText" Style="width: 100%; max-width: 320px;" />
+            <RadzenDropDown Data="statusOptions" @bind-Value="selectedStatus" Placeholder="Tous les statuts" Style="width: 200px;" />
+        </div>
+
+        <div class="patients-layout">
+            <div class="patients-panel">
+                <RadzenDataGrid Data="@filteredPatients" AllowPaging="true" PageSize="10" AllowSorting="true" EmptyText="Aucun patient trouvé.">
+                    <Columns>
+                        <RadzenDataGridColumn Property="NomComplet" Title="Patient" Sortable="false" />
+                        <RadzenDataGridColumn Property="NumeroDossier" Title="N° dossier" />
+                        <RadzenDataGridColumn Property="DateNaissance" Title="Naissance" FormatString="{0:dd/MM/yyyy}" />
+                        <RadzenDataGridColumn Property="Telephone" Title="Téléphone" />
+                        <RadzenDataGridColumn Property="Statut" Title="Statut">
+                            <Template Context="patient">
+                                <span class="status-pill @GetStatusClass(patient.Statut)">@GetStatusLabel(patient.Statut)</span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Actions" Sortable="false" Filterable="false" Width="170px">
+                            <Template Context="patient">
+                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OpenDetails(patient))" />
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(patient))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(patient))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+
+            @if (selectedPatient is not null)
+            {
+                <aside class="patient-detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <p class="eyebrow small">Fiche</p>
+                            <h3>@selectedPatient.NomComplet</h3>
+                        </div>
+                        <span class="status-pill @GetStatusClass(selectedPatient.Statut)">@GetStatusLabel(selectedPatient.Statut)</span>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div>
+                            <span class="meta-label">Date de naissance</span>
+                            <strong>@selectedPatient.DateNaissance.ToString("dd/MM/yyyy")</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Sexe</span>
+                            <strong>@selectedPatient.Sexe</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Téléphone</span>
+                            <strong>@(string.IsNullOrWhiteSpace(selectedPatient.Telephone) ? "—" : selectedPatient.Telephone)</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Email</span>
+                            <strong>@(string.IsNullOrWhiteSpace(selectedPatient.Email) ? "—" : selectedPatient.Email)</strong>
+                        </div>
+                        <div class="full-width">
+                            <span class="meta-label">Adresse</span>
+                            <strong>@(string.IsNullOrWhiteSpace(selectedPatient.Adresse) ? "—" : selectedPatient.Adresse)</strong>
+                        </div>
+                    </div>
+
+                    <div class="history-box">
+                        <h4>Historique médical</h4>
+                        <ul>
+                            @foreach (var item in GetMedicalHistory(selectedPatient))
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    </div>
+                </aside>
+            }
+        </div>
     }
 </div>
 
@@ -64,64 +174,146 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
+
     private List<Patient> patients = new();
+    private List<string> statusOptions = new() { "Tous", "Actif", "Inactif", "Décédé", "Transféré" };
     private bool isEditing;
     private int editingId;
+    private string searchText = string.Empty;
+    private string selectedStatus = "Tous";
     private Patient model = new();
+    private Patient? selectedPatient;
+
+    private IEnumerable<Patient> filteredPatients =>
+        patients.Where(p =>
+            (string.IsNullOrWhiteSpace(searchText)
+                || p.NomComplet.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || p.NumeroDossier?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true)
+            && (selectedStatus == "Tous" || GetStatusLabel(p.Statut) == selectedStatus));
 
     protected override async Task OnInitializedAsync()
     {
         await Load();
+        if (patients.Count > 0)
+        {
+            selectedPatient = patients.First();
+        }
     }
 
     private async Task Load()
     {
         patients = await Db.Patients
             .Include(p => p.DossierMedical)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
 
     private void OpenNew()
     {
         editingId = 0;
-        model = new Patient { DateNaissance = DateTime.Today, Statut = StatutPatient.Actif };
+        model = new Patient
+        {
+            DateNaissance = DateTime.Today,
+            Statut = StatutPatient.Actif,
+            Sexe = Sexe.Masculin
+        };
+        selectedPatient = null;
         isEditing = true;
     }
 
-    private void OpenEdit(Patient p)
+    private void OpenEdit(Patient patient)
     {
-        editingId = p.Id;
+        editingId = patient.Id;
         model = new Patient
         {
-            Id = p.Id,
-            Nom = p.Nom,
-            Prenom = p.Prenom,
-            DateNaissance = p.DateNaissance,
-            Sexe = p.Sexe,
-            NumeroDossier = p.NumeroDossier,
-            Telephone = p.Telephone,
-            Email = p.Email,
-            Adresse = p.Adresse,
-            GroupeSanguin = p.GroupeSanguin,
-            Allergies = p.Allergies,
-            AntecedentsMedicaux = p.AntecedentsMedicaux,
-            Statut = p.Statut,
-            CreatedAt = p.CreatedAt
+            Id = patient.Id,
+            Nom = patient.Nom,
+            Prenom = patient.Prenom,
+            DateNaissance = patient.DateNaissance,
+            Sexe = patient.Sexe,
+            NumeroDossier = patient.NumeroDossier,
+            Telephone = patient.Telephone,
+            Email = patient.Email,
+            Adresse = patient.Adresse,
+            GroupeSanguin = patient.GroupeSanguin,
+            Allergies = patient.Allergies,
+            AntecedentsMedicaux = patient.AntecedentsMedicaux,
+            Statut = patient.Statut,
+            CreatedAt = patient.CreatedAt
         };
+        selectedPatient = patient;
         isEditing = true;
+    }
+
+    private void OpenDetails(Patient patient)
+    {
+        selectedPatient = patient;
+        isEditing = false;
     }
 
     private async Task Save()
     {
-        if (editingId == 0)
+        var validationError = HospitalValidation.ValidatePatient(
+            model.Prenom,
+            model.Nom,
+            model.DateNaissance,
+            model.Email);
+        if (validationError is not null)
         {
-            Db.Patients.Add(model);
+            Notification.Notify(NotificationSeverity.Warning, "Validation", validationError);
+            return;
         }
-        else
+
+        var phoneError = HospitalValidation.ValidatePhone(model.Telephone);
+        if (phoneError is not null)
         {
-            var existing = await Db.Patients.FindAsync(editingId);
-            if (existing != null)
+            Notification.Notify(NotificationSeverity.Warning, "Validation", phoneError);
+            return;
+        }
+
+        try
+        {
+            if (editingId == 0)
             {
+                if (!string.IsNullOrWhiteSpace(model.NumeroDossier)
+                    && await Db.Patients.AnyAsync(p => p.NumeroDossier == model.NumeroDossier))
+                {
+                    Notification.Notify(NotificationSeverity.Warning, "Validation", "Ce numéro de dossier existe déjà.");
+                    return;
+                }
+
+                model.NumeroDossier = await GenerateNumeroDossierAsync(model.NumeroDossier);
+                model.CreatedAt = DateTime.UtcNow;
+                Db.Patients.Add(model);
+                await Db.SaveChangesAsync();
+
+                Db.DossiersMedicaux.Add(new DossierMedical
+                {
+                    PatientId = model.Id,
+                    DateOuverture = DateTime.UtcNow,
+                    EstActif = true
+                });
+                await Db.SaveChangesAsync();
+            }
+            else
+            {
+                var existing = await Db.Patients.FindAsync(editingId);
+                if (existing == null)
+                {
+                    Notification.Notify(NotificationSeverity.Error, "Erreur", "Patient introuvable.");
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(model.NumeroDossier)
+                    && !string.Equals(existing.NumeroDossier, model.NumeroDossier, StringComparison.OrdinalIgnoreCase)
+                    && await Db.Patients.AnyAsync(p => p.Id != editingId && p.NumeroDossier == model.NumeroDossier))
+                {
+                    Notification.Notify(NotificationSeverity.Warning, "Validation", "Ce numéro de dossier existe déjà.");
+                    return;
+                }
+
                 existing.Nom = model.Nom;
                 existing.Prenom = model.Prenom;
                 existing.DateNaissance = model.DateNaissance;
@@ -136,20 +328,117 @@
                 existing.Statut = model.Statut;
                 existing.UpdatedAt = DateTime.UtcNow;
             }
+
+            await Db.SaveChangesAsync();
+            Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le patient a été enregistré.");
+            isEditing = false;
+            await Load();
+            selectedPatient = patients.FirstOrDefault(p => p.Id == editingId) ?? patients.FirstOrDefault();
         }
-        await Db.SaveChangesAsync();
-        Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le patient a été enregistré.");
-        isEditing = false;
-        await Load();
+        catch (DbUpdateException)
+        {
+            Notification.NotifyError("Enregistrement impossible : contrainte de base de données (numéro de dossier ou e-mail en double ?).");
+        }
     }
 
-    private void Cancel() => isEditing = false;
-
-    private async Task Delete(Patient p)
+    private void Cancel()
     {
-        Db.Patients.Remove(p);
-        await Db.SaveChangesAsync();
-        Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le patient a été supprimé.");
-        await Load();
+        isEditing = false;
+        selectedPatient ??= patients.FirstOrDefault();
+    }
+
+    private async Task<string?> GenerateNumeroDossierAsync(string? saisie)
+    {
+        if (!string.IsNullOrWhiteSpace(saisie))
+        {
+            return saisie.Trim();
+        }
+
+        var year = DateTime.UtcNow.Year;
+        var prefix = $"PAT-{year}-";
+        var maxNumero = await Db.Patients
+            .Where(p => p.NumeroDossier != null && p.NumeroDossier.StartsWith(prefix))
+            .OrderByDescending(p => p.NumeroDossier)
+            .Select(p => p.NumeroDossier!)
+            .FirstOrDefaultAsync();
+
+        var next = 1;
+        if (!string.IsNullOrWhiteSpace(maxNumero)
+            && int.TryParse(maxNumero[(prefix.Length)..], out var last))
+        {
+            next = last + 1;
+        }
+
+        return $"{prefix}{next:D4}";
+    }
+
+    private async Task Delete(Patient patient)
+    {
+        if (!await Dialog.ConfirmDeleteAsync($"le patient {patient.NomComplet}", "Les rendez-vous, factures et dossiers associés bloqueront la suppression tant qu'ils existent."))
+        {
+            return;
+        }
+
+        try
+        {
+            var hasLinks = await Db.RendezVous.AnyAsync(r => r.PatientId == patient.Id)
+                || await Db.Factures.AnyAsync(f => f.PatientId == patient.Id)
+                || await Db.Consultations.AnyAsync(c => c.PatientId == patient.Id)
+                || await Db.Admissions.AnyAsync(a => a.PatientId == patient.Id)
+                || await Db.Analyses.AnyAsync(a => a.PatientId == patient.Id)
+                || await Db.Ordonnances.AnyAsync(o => o.PatientId == patient.Id);
+
+            if (hasLinks)
+            {
+                Notification.NotifyError("Suppression impossible : ce patient possède encore des rendez-vous, factures, consultations ou admissions. Archivez-le (statut Inactif) plutôt que de le supprimer.");
+                return;
+            }
+
+            Db.Patients.Remove(patient);
+            await Db.SaveChangesAsync();
+            Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le patient a été supprimé.");
+            await Load();
+            selectedPatient = patients.FirstOrDefault();
+        }
+        catch (DbUpdateException)
+        {
+            Notification.NotifyError("Suppression impossible : des enregistrements liés existent encore en base (contrainte de clé étrangère).");
+        }
+    }
+
+    private static string GetStatusLabel(StatutPatient statut) => statut switch
+    {
+        StatutPatient.Actif => "Actif",
+        StatutPatient.Inactif => "Inactif",
+        StatutPatient.Decede => "Décédé",
+        StatutPatient.Transfere => "Transféré",
+        _ => "Actif"
+    };
+
+    private static string GetStatusClass(StatutPatient statut) => statut switch
+    {
+        StatutPatient.Actif => "active",
+        StatutPatient.Inactif => "inactive",
+        StatutPatient.Decede => "deceased",
+        StatutPatient.Transfere => "transferred",
+        _ => "active"
+    };
+
+    private static List<string> GetMedicalHistory(Patient patient)
+    {
+        var items = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(patient.Allergies))
+            items.Add($"Allergies : {patient.Allergies}");
+
+        if (!string.IsNullOrWhiteSpace(patient.AntecedentsMedicaux))
+            items.Add($"Antécédents : {patient.AntecedentsMedicaux}");
+
+        items.Add($"Dossier créé le {patient.CreatedAt:dd/MM/yyyy}");
+
+        if (patient.UpdatedAt.HasValue)
+            items.Add($"Dernière mise à jour le {patient.UpdatedAt.Value:dd/MM/yyyy}");
+
+        return items.Count > 0 ? items : new List<string> { "Aucun historique médical enregistré pour ce patient." };
     }
 }

@@ -1,0 +1,150 @@
+/* ===== Navigation enhancements ===== */
+
+.app-nav-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hospital-blue), #3b6cb0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.nav-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.nav-user-info strong {
+    font-size: 0.85rem;
+    color: var(--hospital-ink);
+    font-weight: 600;
+}
+
+.nav-user-mail {
+    font-size: 0.75rem;
+    color: var(--hospital-muted);
+}
+
+.nav-logout-form {
+    margin-top: 10px;
+}
+
+.nav-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: var(--hospital-muted);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-logout:hover {
+    background: var(--hospital-ink);
+    color: #fff;
+    border-color: var(--hospital-ink);
+}
+
+.nav-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--hospital-blue);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.nav-login:hover {
+    background: var(--hospital-navy);
+    color: #fff;
+}
+
+/* Section navigation title */
+.nav-section-title {
+    margin: 0 0 8px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--hospital-muted);
+    font-weight: 700;
+}
+
+/* ===== Role badges ===== */
+
+.role-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: #fff;
+    transition: transform 0.2s ease;
+}
+
+.role-badge:hover {
+    transform: scale(1.05);
+}
+
+.role-badge-purple {
+    background: linear-gradient(135deg, #7661bb, #5a4599);
+}
+
+.role-badge-blue {
+    background: linear-gradient(135deg, #2d87ff, #1a5fbf);
+}
+
+.role-badge-green {
+    background: linear-gradient(135deg, #2f9b76, #207557);
+}
+
+.role-badge-orange {
+    background: linear-gradient(135deg, #f48024, #c96914);
+}
+
+/* Welcome message spacing */
+.nav-welcome {
+    margin-top: 6px;
+}
+
+.nav-user {
+    margin-bottom: 8px;
+}

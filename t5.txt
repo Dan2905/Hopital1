@@ -1,0 +1,9 @@
+17802:        <member name="T:Radzen.Blazor.RadzenNumericRangeValidator">
+17805:            RadzenNumericRangeValidator is ideal for quantity limits, age restrictions, price ranges, or any bounded numeric input.
+17816:                &lt;RadzenNumericRangeValidator Component="Age" Min="18" Text="Must be 18 or older" Style="position: absolute" /&gt;
+17823:                &lt;RadzenNumericRangeValidator Component="Quantity" Min="1" Max="100" 
+17829:        <member name="P:Radzen.Blazor.RadzenNumericRangeValidator.Text">
+17836:        <member name="P:Radzen.Blazor.RadzenNumericRangeValidator.Min">
+17844:        <member name="P:Radzen.Blazor.RadzenNumericRangeValidator.Max">
+17852:        <member name="P:Radzen.Blazor.RadzenNumericRangeValidator.AllowNull">
+17860:        <member name="M:Radzen.Blazor.RadzenNumericRangeValidator.Validate(Radzen.IRadzenFormComponent)">

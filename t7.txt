@@ -1,0 +1,21 @@
+7665:        <member name="T:Radzen.Blazor.RadzenCustomValidator">
+7668:            RadzenCustomValidator enables complex validation rules that cannot be achieved with built-in validators, such as database checks, cross-field validation, or business rule enforcement.
+7680:                &lt;RadzenCustomValidator Component="Email" Text="Email already exists" 
+7694:            &lt;RadzenCustomValidator Component="EndDate" Validator=@(() => model.EndDate > model.StartDate) 
+7699:        <member name="P:Radzen.Blazor.RadzenCustomValidator.Text">
+7706:        <member name="P:Radzen.Blazor.RadzenCustomValidator.Validator">
+7714:        <member name="M:Radzen.Blazor.RadzenCustomValidator.Validate(Radzen.IRadzenFormComponent)">
+16105:        <member name="T:Radzen.Blazor.RadzenLengthValidator">
+16108:            RadzenLengthValidator is useful for enforcing username lengths, password complexity, or limiting text field sizes.
+16118:               &lt;RadzenLengthValidator Component="FirstName" Min="3" Text="First name should be at least 3 characters" Style="position: absolute" /&gt;
+16130:        <member name="P:Radzen.Blazor.RadzenLengthValidator.Text">
+16135:        <member name="P:Radzen.Blazor.RadzenLengthValidator.Min">
+16140:        <member name="P:Radzen.Blazor.RadzenLengthValidator.Max">
+16145:        <member name="M:Radzen.Blazor.RadzenLengthValidator.Validate(Radzen.IRadzenFormComponent)">
+22135:        <member name="T:Radzen.Blazor.RadzenRegexValidator">
+22138:            RadzenRegexValidator is useful for validating formats like ZIP codes, phone numbers, custom IDs, or any pattern-based data.
+22149:                &lt;RadzenRegexValidator Component="ZIP" Pattern="^\d{5}$" Text="ZIP code must be 5 digits" Style="position: absolute" /&gt;
+22159:            &lt;RadzenRegexValidator Component="Phone" Pattern="^\d{3}-\d{3}-\d{4}$" Text="Format: 123-456-7890" /&gt;
+22163:        <member name="P:Radzen.Blazor.RadzenRegexValidator.Text">
+22170:        <member name="P:Radzen.Blazor.RadzenRegexValidator.Pattern">
+22178:        <member name="M:Radzen.Blazor.RadzenRegexValidator.Validate(Radzen.IRadzenFormComponent)">

@@ -1,0 +1,147 @@
+@page "/user/{UserId:int}"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Identity
+@using HospitalManagement.Infrastructure.Identity
+@using HospitalManagement.Web.Components.Layout
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+
+<PageTitle>Détails de l'utilisateur - Gestion hospitalière</PageTitle>
+
+<div class="user-detail-page">
+    @if (isLoading)
+    {
+        <p><em>Chargement...</em></p>
+    }
+    else if (user is null)
+    {
+        <div class="not-found">
+            <h2>Utilisateur non trouvé</h2>
+            <p>L'utilisateur demandé n'existe pas ou a été supprimé.</p>
+            <RadzenButton Text="Retour à la liste" Icon="arrow_back" ButtonStyle="ButtonStyle.Primary" Click="@GoBack" />
+        </div>
+    }
+    else
+    {
+        <header class="detail-header">
+            <div class="header-info">
+                <span class="detail-eyebrow">Profil utilisateur</span>
+                <h1>@GetDisplayName(user)</h1>
+                <p class="user-email-display">@user.Email</p>
+            </div>
+            <div class="header-actions">
+                <RadzenButton Text="Retour à la liste" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="@GoBack" />
+            </div>
+        </header>
+
+        <div class="detail-body">
+            <section class="detail-card primary">
+                <h3>Informations de compte</h3>
+                <dl class="detail-list">
+                    <dt>Email</dt>
+                    <dd>@user.Email</dd>
+                    <dt>Nom</dt>
+                    <dd>@user.Nom</dd>
+                    <dt>Prénom</dt>
+                    <dd>@user.Prenom</dd>
+                    <dt>Date de création</dt>
+                    <dd>@user.DateCreation.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt>Statut</dt>
+                    <dd>
+                        <span class="status-badge @(user.EstActif ? "active" : "inactive")">
+                            @(user.EstActif ? "Compte actif" : "Compte inactif")
+                        </span>
+                    </dd>
+                </dl>
+            </section>
+
+            <section class="detail-card">
+                <h3>Rôles assignés</h3>
+                @if (UserRoles.Count > 0)
+                {
+                    <div class="roles-list">
+                        @foreach (var role in UserRoles)
+                        {
+                            <div class="role-item">
+                                <span class="role-badge role-badge-@GetRoleTone(role)">
+                                    @RoleNames.GetLabel(role)
+                                </span>
+                                <span class="role-description">@GetRoleDescription(role)</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="no-roles">Cet utilisateur n'a aucun rôle assigné.</p>
+                }
+            </section>
+
+            <section class="detail-card">
+                <h3>Informations système</h3>
+                <dl class="detail-list">
+                    <dt>ID utilisateur</dt>
+                    <dd>@user.Id</dd>
+                    <dt>Nom d'utilisateur</dt>
+                    <dd>@user.UserName</dd>
+                    <dt>Confirmé</dt>
+                    <dd>@(user.EmailConfirmed ? "Oui" : "Non")</dd>
+                    <dt>Verrouillage activé</dt>
+                    <dd>@(user.LockoutEnabled ? "Oui" : "Non")</dd>
+                    <dt>Échecs de connexion</dt>
+                    <dd>@user.AccessFailedCount</dd>
+                </dl>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    private ApplicationUser? user;
+    private IReadOnlyList<string> UserRoles = [];
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        user = await UserManager.FindByIdAsync(UserId.ToString());
+        if (user != null)
+        {
+            UserRoles = (await UserManager.GetRolesAsync(user)).ToList();
+        }
+        isLoading = false;
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/roles");
+
+    private static string GetDisplayName(ApplicationUser u)
+    {
+        var name = $"{u.Prenom} {u.Nom}".Trim();
+        return string.IsNullOrEmpty(name) ? u.Email : name;
+    }
+
+    private static string GetRoleTone(string role) => role switch
+    {
+        RoleNames.Administrateur => "purple",
+        RoleNames.Medecin => "blue",
+        RoleNames.Infirmier => "green",
+        RoleNames.Receptionniste => "orange",
+        RoleNames.Pharmacien => "green",
+        RoleNames.Laborantin => "orange",
+        _ => "blue"
+    };
+
+    private static string GetRoleDescription(string role) => role switch
+    {
+        RoleNames.Administrateur => "Accès complet à tous les modules et gestion des comptes.",
+        RoleNames.Medecin => "Gestion des patients, consultations et accès au laboratoire.",
+        RoleNames.Infirmier => "Suivi des patients, admissions et accès au laboratoire.",
+        RoleNames.Receptionniste => "Accueil, rendez-vous et facturation.",
+        RoleNames.Pharmacien => "Gestion des stocks et prescriptions.",
+        RoleNames.Laborantin => "Examens et analyses de laboratoire.",
+        _ => "Accès limité."
+    };
+}

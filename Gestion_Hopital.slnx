@@ -4,5 +4,7 @@
     <Project Path="src/HospitalManagement.Domain/HospitalManagement.Domain.csproj" />
     <Project Path="src/HospitalManagement.Infrastructure/HospitalManagement.Infrastructure.csproj" />
     <Project Path="src/HospitalManagement.Web/HospitalManagement.Web.csproj" />
+    <Project Path="tests/HospitalManagement.Application.Tests/HospitalManagement.Application.Tests.csproj" />
   </Folder>
+  <Folder Name="/tests/" />
 </Solution>

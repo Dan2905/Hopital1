@@ -1,0 +1,16 @@
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
+
+<div class="role-badges">
+    @foreach (var badge in Badges)
+    {
+        <span class="role-badge role-badge-@badge.Tone" title="@badge.Label">
+            @badge.Label
+        </span>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<RolBadgeInfo> Badges { get; set; } = [];
+}

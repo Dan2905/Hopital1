@@ -1,60 +1,161 @@
 @page "/rendezvous"
+@attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
 
 <PageTitle>Rendez-vous & Consultations</PageTitle>
 
-<div class="page-card">
-    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
-        <RadzenHeading Size="HeadingSize.H3">Rendez-vous</RadzenHeading>
-        <RadzenButton Text="Nouveau rendez-vous" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
-    </RadzenStack>
+<div class="rendezvous-page">
+    <div class="page-header">
+        <div>
+            <p class="eyebrow">Agenda</p>
+            <h2>Rendez-vous</h2>
+        </div>
+        <RadzenButton Text="Nouveau rendez-vous" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+    </div>
 
     @if (isEditing)
     {
-        <RadzenStack Gap="16px">
-            <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter un rendez-vous" : "Modifier le rendez-vous")</RadzenText>
-            <RadzenLabel Text="Patient" />
-            <RadzenDropDown @bind-Value="model.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" />
-            <RadzenLabel Text="Médecin / Personnel" />
-            <RadzenDropDown @bind-Value="model.PersonnelId" Data="@personnels" TextProperty="NomComplet" ValueProperty="Id" />
-            <RadzenTextBox @bind-Value="model.Motif" Placeholder="Motif" />
-            <RadzenLabel Text="Date et heure" />
-            <RadzenDatePicker @bind-Value="model.DateHeure" ShowTime="true" />
-            <RadzenLabel Text="Durée (minutes)" />
-            <RadzenNumeric @bind-Value="dureeMinutes" />
-            <RadzenLabel Text="Statut" />
-            <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutRendezVous>()" />
-            <RadzenTextArea @bind-Value="model.Notes" Placeholder="Notes" />
-            <RadzenStack Direction="FlexDirection.Row" Gap="8px">
+        <div class="editor-card">
+            <div class="editor-header">
+                <h3>@(editingId == 0 ? "Ajouter un rendez-vous" : "Modifier le rendez-vous")</h3>
+            </div>
+
+            <div class="form-grid">
+                <div class="field-group">
+                    <label>Patient</label>
+                    <RadzenDropDown Data="@patients" TextProperty="NomComplet" ValueProperty="Id" @bind-Value="model.PatientId" Style="width: 100%;" Placeholder="Sélectionner un patient" />
+                </div>
+
+                <div class="field-group">
+                    <label>Médecin / Personnel</label>
+                    <RadzenDropDown Data="@personnels" TextProperty="NomComplet" ValueProperty="Id" @bind-Value="model.PersonnelId" Style="width: 100%;" Placeholder="Sélectionner un professionnel" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Motif</label>
+                    <RadzenTextBox @bind-Value="model.Motif" Placeholder="Motif du rendez-vous" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Date et heure</label>
+                    <RadzenDatePicker @bind-Value="model.DateHeure" ShowTime="true" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Durée</label>
+                    <RadzenNumeric @bind-Value="dureeMinutes" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group">
+                    <label>Statut</label>
+                    <RadzenDropDown Data="Enum.GetValues<StatutRendezVous>()" @bind-Value="model.Statut" Style="width: 100%;" />
+                </div>
+
+                <div class="field-group full-width">
+                    <label>Notes</label>
+                    <RadzenTextArea @bind-Value="model.Notes" Placeholder="Notes complémentaires" Rows="4" Style="width: 100%;" />
+                </div>
+            </div>
+
+            <div class="form-actions">
                 <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
-                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
-            </RadzenStack>
-        </RadzenStack>
+                <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Light" Click="@Cancel" />
+            </div>
+        </div>
     }
     else
     {
-        <RadzenDataGrid Data="@rendezVous" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Title="Patient">
-                    <Template>
-                        @(context?.Patient?.Nom + " " + context?.Patient?.Prenom)
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn Title="Personnel">
-                    <Template>
-                        @(context?.Personnel?.Nom + " " + context?.Personnel?.Prenom)
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn Property="Motif" Title="Motif" />
-                <RadzenDataGridColumn Property="DateHeure" Title="Date / heure" FormatString="{0:dd/MM/yyyy HH:mm}" />
-                <RadzenDataGridColumn Property="Statut" Title="Statut" />
-                <RadzenDataGridColumn Title="">
-                    <Template>
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
+        <div class="filter-bar">
+            <RadzenTextBox Placeholder="Rechercher un rendez-vous..." @bind-Value="searchText" Style="width: 100%; max-width: 320px;" />
+            <RadzenDropDown Data="statusOptions" @bind-Value="selectedStatus" Placeholder="Tous les statuts" Style="width: 220px;" />
+        </div>
+
+        <div class="rdv-layout">
+            <div class="rdv-panel">
+                <RadzenDataGrid Data="@filteredRendezVous" AllowPaging="true" PageSize="10" AllowSorting="true" EmptyText="Aucun rendez-vous trouvé.">
+                    <Columns>
+                        <RadzenDataGridColumn Title="Patient" Sortable="false">
+                            <Template Context="rdv">
+                                @GetPatientDisplayName(rdv.Patient)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Médecin" Sortable="false">
+                            <Template Context="rdv">
+                                @GetPersonnelDisplayName(rdv.Personnel)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="Motif" Title="Motif" />
+                        <RadzenDataGridColumn Property="DateHeure" Title="Date / heure" FormatString="{0:dd/MM/yyyy HH:mm}" />
+                        <RadzenDataGridColumn Property="Duree" Title="Durée" Sortable="false">
+                            <Template Context="rdv">
+                                @FormatDuration(rdv.Duree)
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="Statut" Title="Statut">
+                            <Template Context="rdv">
+                                <span class="status-pill @GetStatusClass(rdv.Statut)">@GetStatusLabel(rdv.Statut)</span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Actions" Sortable="false" Filterable="false" Width="210px">
+                            <Template Context="rdv">
+                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OpenDetails(rdv))" />
+                                @if (rdv.Statut is StatutRendezVous.Planifie or StatutRendezVous.Confirme)
+                                {
+                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Marquer terminé" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Termine))" />
+                                    <RadzenButton Icon="cancel" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Annuler" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Annule))" />
+                                }
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(rdv))" />
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(rdv))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+
+            @if (selectedRendezVous is not null)
+            {
+                <aside class="rdv-detail-card">
+                    <div class="detail-header">
+                        <div>
+                            <p class="eyebrow small">Détail</p>
+                            <h3>@selectedRendezVous.Motif</h3>
+                        </div>
+                        <span class="status-pill @GetStatusClass(selectedRendezVous.Statut)">@GetStatusLabel(selectedRendezVous.Statut)</span>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div>
+                            <span class="meta-label">Patient</span>
+                            <strong>@GetPatientDisplayName(selectedRendezVous.Patient)</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Professionnel</span>
+                            <strong>@GetPersonnelDisplayName(selectedRendezVous.Personnel)</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Date</span>
+                            <strong>@selectedRendezVous.DateHeure.ToString("dd/MM/yyyy")</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Heure</span>
+                            <strong>@selectedRendezVous.DateHeure.ToString("HH:mm")</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Durée</span>
+                            <strong>@FormatDuration(selectedRendezVous.Duree)</strong>
+                        </div>
+                        <div>
+                            <span class="meta-label">Créé le</span>
+                            <strong>@selectedRendezVous.CreatedAt.ToString("dd/MM/yyyy")</strong>
+                        </div>
+                    </div>
+
+                    <div class="history-box">
+                        <h4>Notes</h4>
+                        <p>@(string.IsNullOrWhiteSpace(selectedRendezVous.Notes) ? "Aucune note complémentaire." : selectedRendezVous.Notes)</p>
+                    </div>
+                </aside>
+            }
+        </div>
     }
 </div>
 
@@ -65,22 +166,46 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
+
     private List<RendezVous> rendezVous = new();
     private List<Patient> patients = new();
     private List<Personnel> personnels = new();
+    private List<string> statusOptions = new() { "Tous", "Planifié", "Confirmé", "Annulé", "Terminé", "No Show" };
+    private string searchText = string.Empty;
+    private string selectedStatus = "Tous";
     private bool isEditing;
     private int editingId;
     private RendezVous model = new();
+    private RendezVous? selectedRendezVous;
     private int dureeMinutes = 30;
+
+    private IEnumerable<RendezVous> filteredRendezVous =>
+        rendezVous.Where(r =>
+            (string.IsNullOrWhiteSpace(searchText)
+                || r.Motif?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || GetPatientDisplayName(r.Patient).Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || GetPersonnelDisplayName(r.Personnel).Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            && (selectedStatus == "Tous" || GetStatusLabel(r.Statut) == selectedStatus));
 
     protected override async Task OnInitializedAsync()
     {
         await Load();
+        if (rendezVous.Count > 0)
+        {
+            selectedRendezVous = rendezVous.OrderByDescending(r => r.DateHeure).First();
+        }
     }
 
     private async Task Load()
     {
-        rendezVous = await Db.RendezVous.Include(r => r.Patient).Include(r => r.Personnel).ToListAsync();
+        rendezVous = await Db.RendezVous
+            .Include(r => r.Patient)
+            .Include(r => r.Personnel)
+            .OrderByDescending(r => r.DateHeure)
+            .ToListAsync();
+
         patients = await Db.Patients.ToListAsync();
         personnels = await Db.Personnels.ToListAsync();
     }
@@ -88,65 +213,165 @@
     private void OpenNew()
     {
         editingId = 0;
-        model = new RendezVous { DateHeure = DateTime.Today.AddHours(9), Statut = StatutRendezVous.Planifie };
+        model = new RendezVous
+        {
+            DateHeure = DateTime.Today.AddHours(9),
+            Statut = StatutRendezVous.Planifie,
+            Duree = TimeSpan.FromMinutes(30)
+        };
         dureeMinutes = 30;
         isEditing = true;
     }
 
-    private void OpenEdit(RendezVous r)
+    private void OpenEdit(RendezVous rdv)
     {
-        editingId = r.Id;
+        editingId = rdv.Id;
         model = new RendezVous
         {
-            Id = r.Id,
-            PatientId = r.PatientId,
-            PersonnelId = r.PersonnelId,
-            Motif = r.Motif,
-            DateHeure = r.DateHeure,
-            Duree = r.Duree,
-            Statut = r.Statut,
-            Notes = r.Notes,
-            CreatedAt = r.CreatedAt
+            Id = rdv.Id,
+            PatientId = rdv.PatientId,
+            PersonnelId = rdv.PersonnelId,
+            Motif = rdv.Motif,
+            DateHeure = rdv.DateHeure,
+            Duree = rdv.Duree,
+            Statut = rdv.Statut,
+            Notes = rdv.Notes,
+            CreatedAt = rdv.CreatedAt
         };
-        dureeMinutes = (int)r.Duree.TotalMinutes;
+        dureeMinutes = (int)rdv.Duree.TotalMinutes;
+        selectedRendezVous = rdv;
         isEditing = true;
+    }
+
+    private void OpenDetails(RendezVous rdv)
+    {
+        selectedRendezVous = rdv;
+        isEditing = false;
     }
 
     private async Task Save()
     {
+        var validationError = HospitalValidation.ValidateAppointment(
+            model.PatientId,
+            model.PersonnelId,
+            model.DateHeure,
+            dureeMinutes);
+        if (validationError is not null)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", validationError);
+            return;
+        }
+
         model.Duree = TimeSpan.FromMinutes(dureeMinutes);
+
+        var overlap = await Db.RendezVous.AnyAsync(r =>
+            r.Id != editingId
+            && r.Statut != StatutRendezVous.Annule
+            && r.Statut != StatutRendezVous.Termine
+            && (r.PersonnelId == model.PersonnelId || r.PatientId == model.PatientId)
+            && r.DateHeure < model.DateHeure.Add(model.Duree)
+            && model.DateHeure < r.DateHeure.Add(r.Duree));
+
+        if (overlap)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Chevauchement", "Ce créneau chevauche un autre rendez-vous du patient ou du professionnel.");
+            return;
+        }
+
         if (editingId == 0)
         {
+            model.CreatedAt = DateTime.UtcNow;
             Db.RendezVous.Add(model);
         }
         else
         {
             var existing = await Db.RendezVous.FindAsync(editingId);
-            if (existing != null)
+            if (existing == null)
             {
-                existing.PatientId = model.PatientId;
-                existing.PersonnelId = model.PersonnelId;
-                existing.Motif = model.Motif;
-                existing.DateHeure = model.DateHeure;
-                existing.Duree = model.Duree;
-                existing.Statut = model.Statut;
-                existing.Notes = model.Notes;
-                existing.UpdatedAt = DateTime.UtcNow;
+                Notification.Notify(NotificationSeverity.Error, "Erreur", "Rendez-vous introuvable.");
+                return;
             }
+
+            existing.PatientId = model.PatientId;
+            existing.PersonnelId = model.PersonnelId;
+            existing.Motif = model.Motif;
+            existing.DateHeure = model.DateHeure;
+            existing.Duree = model.Duree;
+            existing.Statut = model.Statut;
+            existing.Notes = model.Notes;
+            existing.UpdatedAt = DateTime.UtcNow;
         }
+
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Success, "Enregistré", "Le rendez-vous a été enregistré.");
         isEditing = false;
         await Load();
+        selectedRendezVous = rendezVous.FirstOrDefault(r => r.Id == editingId) ?? rendezVous.FirstOrDefault();
     }
 
-    private void Cancel() => isEditing = false;
-
-    private async Task Delete(RendezVous r)
+    private void Cancel()
     {
-        Db.RendezVous.Remove(r);
+        isEditing = false;
+        selectedRendezVous ??= rendezVous.FirstOrDefault();
+    }
+
+    private async Task Delete(RendezVous rdv)
+    {
+        if (!await Dialog.ConfirmDeleteAsync("ce rendez-vous"))
+        {
+            return;
+        }
+
+        var linkedConsultations = await Db.Consultations.AnyAsync(c => c.RendezVousId == rdv.Id);
+        if (linkedConsultations)
+        {
+            Notification.NotifyError("Suppression impossible : une consultation est rattachée à ce rendez-vous. Annulez-le plutôt que de le supprimer.");
+            return;
+        }
+
+        Db.RendezVous.Remove(rdv);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "Le rendez-vous a été supprimé.");
         await Load();
+        selectedRendezVous = rendezVous.FirstOrDefault();
     }
+
+    private async Task ChangeStatus(RendezVous rdv, StatutRendezVous statut)
+    {
+        rdv.Statut = statut;
+        rdv.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+        Notification.NotifySuccess($"Le rendez-vous est passé au statut « {GetStatusLabel(statut)} ».");
+        await Load();
+        selectedRendezVous = rendezVous.FirstOrDefault(r => r.Id == rdv.Id);
+    }
+
+    private static string GetPatientDisplayName(Patient? patient)
+        => patient is null ? "—" : $"{patient.Prenom} {patient.Nom}";
+
+    private static string GetPersonnelDisplayName(Personnel? personnel)
+        => personnel is null ? "—" : $"{personnel.Prenom} {personnel.Nom}";
+
+    private static string FormatDuration(TimeSpan duration)
+        => duration.TotalMinutes < 60 ? $"{duration.TotalMinutes} min" : $"{Math.Round(duration.TotalMinutes / 60, 1)} h";
+
+    private static string GetStatusLabel(StatutRendezVous statut) => statut switch
+    {
+        StatutRendezVous.Planifie => "Planifié",
+        StatutRendezVous.Confirme => "Confirmé",
+        StatutRendezVous.Annule => "Annulé",
+        StatutRendezVous.Termine => "Terminé",
+        StatutRendezVous.NoShow => "No Show",
+        _ => "Planifié"
+    };
+
+    private static string GetStatusClass(StatutRendezVous statut) => statut switch
+    {
+        StatutRendezVous.Planifie => "scheduled",
+        StatutRendezVous.Confirme => "confirmed",
+        StatutRendezVous.Annule => "cancelled",
+        StatutRendezVous.Termine => "completed",
+        StatutRendezVous.NoShow => "noshow",
+        _ => "scheduled"
+    };
 }

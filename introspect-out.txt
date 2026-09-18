@@ -1,0 +1,1 @@
+Unhandled exception: An error occurred trying to start process 'c:\Users\divulu\Desktop\Dev\Gestion_Hopital\_introspect\bin\Debug\net10.0\Introspect.exe' with working directory 'c:\Users\divulu\Desktop\Dev\Gestion_Hopital\_introspect'. This program is blocked by group policy. For more information, contact your system administrator.

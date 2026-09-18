@@ -1,4 +1,5 @@
 @page "/facturation"
+@attribute [Authorize(Roles = "Admin,Receptionniste")]
 
 <PageTitle>Facturation</PageTitle>
 
@@ -8,22 +9,60 @@
         <RadzenButton Text="Nouvelle facture" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
     </RadzenStack>
 
+    <RadzenStack Direction="FlexDirection.Row" Gap="12px" AlignItems="AlignItems.Center" Style="margin-bottom: 16px;">
+        <RadzenTextBox Placeholder="Rechercher (numéro, patient...)" @bind-Value="searchText" Style="width: 100%; max-width: 320px;" />
+        <RadzenDropDown Data="statusOptions" @bind-Value="selectedStatus" Placeholder="Tous les statuts" Style="width: 220px;" />
+    </RadzenStack>
+
     @if (isEditing)
     {
         <RadzenStack Gap="16px">
             <RadzenText Size="TextSize.Large">@(editingId == 0 ? "Ajouter une facture" : "Modifier la facture")</RadzenText>
-            <RadzenTextBox @bind-Value="model.Numero" Placeholder="Numéro" />
+            <RadzenTextBox @bind-Value="model.Numero" Placeholder="Numéro (auto si vide)" />
             <RadzenLabel Text="Patient" />
-            <RadzenDropDown @bind-Value="model.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" />
-            <RadzenLabel Text="Date d'émission" />
-            <RadzenDatePicker @bind-Value="model.DateEmission" />
-            <RadzenLabel Text="Montant total" />
-            <RadzenNumeric @bind-Value="model.MontantTotal" Format="C2" />
-            <RadzenLabel Text="Montant payé" />
-            <RadzenNumeric @bind-Value="model.MontantPaye" Format="C2" />
+            <RadzenDropDown @bind-Value="model.PatientId" Data="@patients" TextProperty="NomComplet" ValueProperty="Id" Placeholder="Sélectionner un patient" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="16px">
+                <RadzenStack Gap="4px" Style="flex:1">
+                    <RadzenLabel Text="Date d'émission" />
+                    <RadzenDatePicker @bind-Value="model.DateEmission" />
+                </RadzenStack>
+                <RadzenStack Gap="4px" Style="flex:1">
+                    <RadzenLabel Text="Date d'échéance" />
+                    <RadzenDatePicker @bind-Value="model.DateEcheance" />
+                </RadzenStack>
+            </RadzenStack>
             <RadzenLabel Text="Statut" />
             <RadzenDropDown @bind-Value="model.Statut" Data="Enum.GetValues<StatutFacture>()" />
             <RadzenTextArea @bind-Value="model.Notes" Placeholder="Notes" />
+
+            <RadzenHeading Size="HeadingSize.H5">Lignes de facture</RadzenHeading>
+            @foreach (var ligne in lignes)
+            {
+                <RadzenStack Direction="FlexDirection.Row" Gap="8px" AlignItems="AlignItems.End">
+                    <RadzenStack Gap="4px" Style="flex:2">
+                        <RadzenLabel Text="Désignation" />
+                        <RadzenTextBox @bind-Value="ligne.Designation" Placeholder="Prestation, médicament..." />
+                    </RadzenStack>
+                    <RadzenStack Gap="4px" Style="flex:0 0 110px">
+                        <RadzenLabel Text="Quantité" />
+                        <RadzenNumeric @bind-Value="ligne.Quantite" Min="1" Change="@RecalculateTotal" />
+                    </RadzenStack>
+                    <RadzenStack Gap="4px" Style="flex:0 0 160px">
+                        <RadzenLabel Text="Prix unitaire" />
+                        <RadzenNumeric @bind-Value="ligne.PrixUnitaire" Format="C2" Min="0" Change="@RecalculateTotal" />
+                    </RadzenStack>
+                    <RadzenText Style="min-width:110px; text-align:right">@ligne.Montant.ToString("C2")</RadzenText>
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => RemoveLigne(ligne))" />
+                </RadzenStack>
+            }
+            <RadzenButton Text="Ajouter une ligne" Icon="add" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@AddLigne" />
+            <RadzenStack Direction="FlexDirection.Row" Gap="16px" JustifyContent="JustifyContent.End">
+                <RadzenText><strong>Total : @model.MontantTotal.ToString("C2")</strong></RadzenText>
+                <RadzenStack Gap="4px" Style="width:200px">
+                    <RadzenLabel Text="Montant payé" />
+                    <RadzenNumeric @bind-Value="model.MontantPaye" Format="C2" Min="0" />
+                </RadzenStack>
+            </RadzenStack>
             <RadzenStack Direction="FlexDirection.Row" Gap="8px">
                 <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
                 <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
@@ -32,27 +71,79 @@
     }
     else
     {
-        <RadzenDataGrid Data="@factures" AllowPaging="true" AllowSorting="true" PageSize="10">
+        <RadzenDataGrid Data="@filteredFactures" AllowPaging="true" AllowSorting="true" PageSize="10" EmptyText="Aucune facture.">
             <Columns>
                 <RadzenDataGridColumn Property="Numero" Title="Numéro" />
                 <RadzenDataGridColumn Title="Patient">
                     <Template>
-                        @(context?.Patient?.Nom + " " + context?.Patient?.Prenom)
+                        @(context?.Patient?.NomComplet ?? "—")
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="DateEmission" Title="Date" FormatString="{0:dd/MM/yyyy}" />
-                <RadzenDataGridColumn Property="MontantTotal" Title="Total" FormatString="{0:C2}" />
-                <RadzenDataGridColumn Property="MontantPaye" Title="Payé" FormatString="{0:C2}" />
-                <RadzenDataGridColumn Property="MontantRestant" Title="Restant" FormatString="{0:C2}" />
-                <RadzenDataGridColumn Property="Statut" Title="Statut" />
-                <RadzenDataGridColumn Title="">
+                <RadzenDataGridColumn Title="Total" Sortable="true">
                     <Template>
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                        @context!.MontantTotal.ToString("C2")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Payé" Sortable="false">
+                    <Template>
+                        @context!.MontantPaye.ToString("C2")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Restant" Sortable="false">
+                    <Template>
+                        @context!.MontantRestant.ToString("C2")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Statut" Sortable="false">
+                    <Template>
+                        <span class="status-pill @GetStatusClass(context!.Statut)">@GetStatusLabel(context!.Statut)</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="" Sortable="false" Width="230px">
+                    <Template>
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Détail / paiements" Click="@(() => OpenPayments(context!))" />
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(context!))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context!))" />
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
+
+        @if (selectedFacture is not null)
+        {
+            <RadzenStack Gap="12px" Style="margin-top: 24px;" class="editor-card">
+                <RadzenStack Direction="FlexDirection.Row" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenText Size="TextSize.Large"><strong>@selectedFacture.Numero</strong> — @selectedFacture.Patient?.NomComplet</RadzenText>
+                    <span class="status-pill @GetStatusClass(selectedFacture.Statut)">@GetStatusLabel(selectedFacture.Statut)</span>
+                </RadzenStack>
+                <RadzenText>Total : <strong>@selectedFacture.MontantTotal.ToString("C2")</strong> — Payé : <strong>@selectedFacture.MontantPaye.ToString("C2")</strong> — Reste : <strong>@selectedFacture.MontantRestant.ToString("C2")</strong></RadzenText>
+                <RadzenHeading Size="HeadingSize.H6">Paiements (@selectedFacture.Paiements.Count)</RadzenHeading>
+                @if (selectedFacture.Paiements.Count == 0)
+                {
+                    <RadzenText>Aucun paiement enregistré.</RadzenText>
+                }
+                else
+                {
+                    <RadzenText>@string.Join(" | ", selectedFacture.Paiements.Select(p => $"{p.DatePaiement:dd/MM/yyyy} — {p.Montant:C2} ({p.Mode})"))</RadzenText>
+                }
+                <RadzenStack Direction="FlexDirection.Row" Gap="8px" AlignItems="AlignItems.End">
+                    <RadzenStack Gap="4px" Style="width:200px">
+                        <RadzenLabel Text="Montant" />
+                        <RadzenNumeric @bind-Value="paymentAmount" Format="C2" Min="0.01" />
+                    </RadzenStack>
+                    <RadzenStack Gap="4px" Style="width:200px">
+                        <RadzenLabel Text="Mode" />
+                        <RadzenDropDown @bind-Value="paymentMode" Data="Enum.GetValues<ModePaiement>()" />
+                    </RadzenStack>
+                    <RadzenStack Gap="4px" Style="flex:1">
+                        <RadzenLabel Text="Référence" />
+                        <RadzenTextBox @bind-Value="paymentReference" Placeholder="Référence / reçu" />
+                    </RadzenStack>
+                    <RadzenButton Text="Encaisser" Icon="payments" ButtonStyle="ButtonStyle.Success" Click="@RegisterPayment" Disabled="@(selectedFacture.MontantRestant <= 0)" />
+                </RadzenStack>
+            </RadzenStack>
+        }
     }
 </div>
 
@@ -62,6 +153,9 @@
 
     [Inject]
     private NotificationService Notification { get; set; } = default!;
+
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
 
     private List<Facture> factures = new();
     private List<Patient> patients = new();
@@ -140,6 +234,11 @@
 
     private async Task Delete(Facture f)
     {
+        if (!await Dialog.ConfirmDeleteAsync($"la facture {f.Numero}"))
+        {
+            return;
+        }
+
         Db.Factures.Remove(f);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "La facture a été supprimée.");

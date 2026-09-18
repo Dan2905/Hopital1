@@ -11,69 +11,68 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Connexion</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+<div class="login-page-shell">
+    <div class="login-card">
+        <div class="login-brand" aria-label="MediCare logo and brand">
+            <div class="login-brand-mark">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M3.9 12a8.1 8.1 0 1 1 16.2 0 8.1 8.1 0 0 1-16.2 0Zm7.7-4.1a.8.8 0 0 0-1.6 0v2.8H6.9a.8.8 0 0 0 0 1.6h3.1v2.8a.8.8 0 1 0 1.6 0v-2.8h2.9a.8.8 0 1 0 0-1.6h-2.9V7.9Z"/>
+                    <path d="M12 4.6c-1.7 0-3.3.7-4.4 1.8A6.4 6.4 0 0 0 12 18.4a6.4 6.4 0 0 0 4.4-11.9A6.4 6.4 0 0 0 12 4.6Zm0 1.7a4.7 4.7 0 0 1 3.4 1.5 4.7 4.7 0 0 1-6.8 6.8A4.7 4.7 0 0 1 12 6.3Z" fill="none"/>
+                </svg>
+            </div>
+            <span>MediCare</span>
+        </div>
+
+        <h1>Connexion</h1>
+        <p class="login-subtitle">Retrouvez votre tableau de bord en quelques secondes.</p>
+
+        <StatusMessage Message="@errorMessage" />
+
+        <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login" class="login-form">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="login-validation" role="alert" />
+
+            <div class="login-field-group">
+                <label for="Input.Email" class="login-label">Adresse e-mail professionnelle</label>
+                <div class="login-input-wrap">
+                    <span class="login-input-icon" aria-hidden="true">✉</span>
+                    <InputText @bind-Value="Input.Email" id="Input.Email" class="login-input" autocomplete="username webauthn" aria-required="true" placeholder="prenom.nom@hospital.fr" />
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                <ValidationMessage For="() => Input.Email" class="login-validation-message" />
+            </div>
+
+            <div class="login-field-group">
+                <div class="login-label-row">
+                    <label for="Input.Password" class="login-label">Mot de passe</label>
+                    <a href="Account/ForgotPassword" class="login-link">Mot de passe oublié ?</a>
                 </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
+                <div class="login-input-wrap password-wrap">
+                    <span class="login-input-icon" aria-hidden="true">🔒</span>
+                    <InputText type="@PasswordInputType" @bind-Value="Input.Password" id="Input.Password" class="login-input" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
+                    <button type="button" class="login-password-toggle" @onclick="TogglePasswordVisibility" aria-label="@(showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe")" aria-pressed="@showPassword">
+                        @(showPassword ? "🙈" : "👁")
+                    </button>
                 </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <hr />
-                <div class="d-flex flex-column">
-                    <span class="text-secondary mx-auto mt-2">OR</span>
-                    <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn btn-link mx-auto">Log in with a passkey</PasskeySubmit>
-                </div>
-                <hr />
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+                <ValidationMessage For="() => Input.Password" class="login-validation-message" />
+            </div>
+
+            <label class="login-remember">
+                <InputCheckbox @bind-Value="Input.RememberMe" class="login-checkbox" />
+                <span>Rester connecté sur cet appareil</span>
+            </label>
+
+            <button type="submit" class="login-submit">Se connecter <span aria-hidden="true">→</span></button>
+        </EditForm>
     </div>
 </div>
 
 @code {
     private string? errorMessage;
     private EditContext editContext = default!;
+    private bool showPassword;
+    private string PasswordInputType => showPassword ? "text" : "password";
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -92,9 +91,13 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
     }
 
     public async Task LoginUser()
@@ -108,19 +111,15 @@
         SignInResult result;
         if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
         {
-            // When performing passkey sign-in, don't perform form validation.
             result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
         }
         else
         {
-            // If doing a password sign-in, validate the form.
             if (!editContext.Validate())
             {
                 return;
             }
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
             result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         }
 
@@ -142,7 +141,7 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            errorMessage = "Erreur : identifiants invalides.";
         }
     }
 

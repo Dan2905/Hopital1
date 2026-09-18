@@ -1,0 +1,122 @@
+@namespace HospitalManagement.Web.Components.Layout
+@using System.Security.Claims
+@using HospitalManagement.Web.Navigation
+@inject UserContextService UserContext
+@inject NavigationManager Navigation
+
+<nav class="app-nav" aria-label="Menu de l'application">
+    <NavLink class="app-nav-brand" href="/" Match="NavLinkMatch.All">
+        <span class="brand-mark">
+            <RadzenIcon Icon="local_hospital" />
+        </span>
+        <span class="brand-text">
+            <strong>Hôpital Central</strong>
+            <span>Gestion hospitalière</span>
+        </span>
+    </NavLink>
+
+    <div class="app-nav-scroll">
+        @{
+            var isAdmin = User?.IsInRole(RoleNames.Administrateur) == true;
+            var visibleSections = AppModuleCatalog.Sections
+                .Where(section => section.Modules.Any(m => AppModuleCatalog.MayAccess(m, User)))
+                .Where(section => isAdmin || !string.Equals(section.Title, "Administration", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        @foreach (var section in visibleSections)
+        {
+            var visibleModules = section.Modules.Where(m => AppModuleCatalog.MayAccess(m, User)).ToList();
+            if (visibleModules.Count == 0)
+            {
+                continue;
+            }
+
+            <div class="nav-section">
+                <p class="nav-section-title">@section.Title</p>
+                <ul class="nav-list">
+                    @foreach (var module in visibleModules)
+                    {
+                        <li>
+                            <NavLink class="nav-item"
+                                     href="@module.Url"
+                                     Match="@GetMatch(module)"
+                                     title="@module.Description">
+                                <span class="nav-icon @module.Tone">
+                                    <RadzenIcon Icon="@module.Icon" />
+                                </span>
+                                <span class="nav-label">@module.Label</span>
+                            </NavLink>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+
+    <div class="app-nav-footer">
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-user">
+                    <span class="nav-avatar">@SecurityHelper.GetInitials(User)</span>
+                    <span class="nav-user-info">
+                        <strong>@UserContext.GetProfile()?.RoleLabel</strong>
+                        <span class="nav-user-mail">@User.Identity?.Name</span>
+                    </span>
+                </div>
+
+                @if (User is not null)
+                {
+                    <div class="nav-role-badges">
+                        <RoleBadges Badges="User.GetRoleBadges()" />
+                    </div>
+                }
+
+                <div class="nav-welcome">
+                    <span class="welcome-badge">
+                        <RadzenIcon Icon="info_outline" />
+                    </span>
+                    <span class="welcome-text">
+                        @UserContextService.BuildWelcomeMessage(GetUserProfile()?.FirstName, User?.GetRoleLabel() ?? "")
+                    </span>
+                </div>
+
+                <form class="nav-logout-form" action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="returnUrl" value="Account/Login" />
+                    <button class="nav-logout" type="submit">
+                        <RadzenIcon Icon="logout" />
+                        <span>Déconnexion</span>
+                    </button>
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <a class="nav-login" href="Account/Login">
+                    <RadzenIcon Icon="login" />
+                    <span>Se connecter</span>
+                </a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</nav>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    private ClaimsPrincipal? contextUser;
+    private UserProfileProfile? userProfile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        contextUser = authState.User;
+        userProfile = UserContext.GetProfile();
+    }
+
+    private UserProfileProfile? GetUserProfile() => userProfile;
+    private ClaimsPrincipal? User => contextUser;
+
+    private static NavLinkMatch GetMatch(AppModule module) =>
+        module.Url == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix;
+}

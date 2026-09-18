@@ -1,4 +1,5 @@
 @page "/laboratoire"
+@attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Laborantin")]
 
 <PageTitle>Laboratoire</PageTitle>
 
@@ -104,6 +105,9 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
+
     private List<ExamenLaboratoire> examens = new();
     private List<Analyse> analyses = new();
     private List<Patient> patients = new();
@@ -178,6 +182,11 @@
 
     private async Task DeleteExamen(ExamenLaboratoire e)
     {
+        if (!await Dialog.ConfirmDeleteAsync($"l'examen {e.Nom}"))
+        {
+            return;
+        }
+
         Db.ExamensLaboratoire.Remove(e);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "L'examen a été supprimé.");
@@ -238,6 +247,11 @@
 
     private async Task DeleteAnalyse(Analyse a)
     {
+        if (!await Dialog.ConfirmDeleteAsync("cette analyse"))
+        {
+            return;
+        }
+
         Db.Analyses.Remove(a);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "L'analyse a été supprimée.");

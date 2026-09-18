@@ -1,0 +1,6 @@
+36246:        <member name="M:Radzen.DialogService.Confirm(System.String,System.String,Radzen.ConfirmOptions,System.Nullable{System.Threading.CancellationToken})">
+36256:        <member name="M:Radzen.DialogService.Confirm(Microsoft.AspNetCore.Components.RenderFragment,System.String,Radzen.ConfirmOptions,System.Nullable{System.Threading.CancellationToken})">
+36537:            Class ConfirmOptions.
+36545:        <member name="T:Radzen.ConfirmOptions">
+36547:            Class ConfirmOptions.
+36550:        <member name="P:Radzen.ConfirmOptions.CancelButtonText">

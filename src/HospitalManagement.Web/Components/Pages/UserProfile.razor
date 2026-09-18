@@ -1,0 +1,80 @@
+@page "/profile"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthState
+@inject UserManager<ApplicationUser> UserManager
+@inject UserContextService UserContext
+
+<PageTitle>Mon profil — Gestion hospitalière</PageTitle>
+
+<div class="profile-page">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            @UserContext.GetProfile()?.Initials ?? "?"
+        </div>
+        <div class="profile-info">
+            <h2>Profil de @GetDisplayName()</h2>
+            <p class="profile-role">
+                <span class="role-badge">@UserContext.GetProfile()?.RoleLabel</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="profile-details">
+        <div class="detail-group">
+            <h3>Informations de connexion</h3>
+            <dl class="detail-list">
+                <dt>Email</dt>
+                <dd>@UserContext.GetProfile()?.Email</dd>
+                <dt>Rôle</dt>
+                <dd>@UserContext.GetProfile()?.RoleLabel</dd>
+                <dt>Code rôle</dt>
+                <dd>@UserContext.GetProfile()?.RoleCode</dd>
+            </dl>
+        </div>
+
+        <div class="detail-group">
+            <h3>Informations personnelles</h3>
+            @if (user is not null)
+            {
+                <dl class="detail-list">
+                    <dt>Nom</dt>
+                    <dd>@user.Nom</dd>
+                    <dt>Prénom</dt>
+                    <dd>@user.Prenom</dd>
+                    <dt>Date de création</dt>
+                    <dd>@user.DateCreation.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt>Statut</dt>
+                    <dd>@(user.EstActif ? "Actif" : "Inactif")</dd>
+                </dl>
+            }
+            else
+            {
+                <p>Impossible de charger les informations utilisateur.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private ApplicationUser? user;
+    private ClaimsPrincipal? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+        user = await UserManager.GetUserAsync(currentUser);
+    }
+
+    private string GetDisplayName()
+    {
+        var profile = UserContext.GetProfile();
+        if (profile is not null && !string.IsNullOrWhiteSpace(profile.FirstName))
+        {
+            return profile.FirstName;
+        }
+
+        return currentUser?.Identity?.Name ?? "l'utilisateur";
+    }
+}

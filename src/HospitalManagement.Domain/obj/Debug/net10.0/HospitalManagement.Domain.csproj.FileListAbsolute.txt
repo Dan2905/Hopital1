@@ -5,6 +5,7 @@ C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\De
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.AssemblyInfoInputs.cache
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.AssemblyInfo.cs
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.csproj.CoreCompileInputs.cache
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.sourcelink.json
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.dll
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\refint\HospitalManagement.Domain.dll
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Domain\obj\Debug\net10.0\HospitalManagement.Domain.pdb

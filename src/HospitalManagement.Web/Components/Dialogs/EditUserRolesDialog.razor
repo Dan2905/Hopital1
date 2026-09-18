@@ -1,0 +1,108 @@
+@using Microsoft.AspNetCore.Identity
+@using HospitalManagement.Infrastructure.Identity
+@using HospitalManagement.Web.Components.Layout
+
+<div class="dialog-content">
+    <div class="dialog-header">
+        <h3>Modifier les rôles</h3>
+        <p class="dialog-subtitle">@UserName</p>
+    </div>
+
+    <div class="roles-list">
+        @foreach (var role in availableRoles)
+        {
+            var isSelected = SelectedRoles.Contains(role);
+            <div class="role-item">
+                <div class="role-checkbox">
+                    <RadzenCheckBox @bind-Value="isSelected" Changed="@(() => ToggleRole(role))" />
+                </div>
+                <div class="role-info">
+                    <span class="role-name">@RoleNames.GetLabel(role)</span>
+                    <span class="role-desc">@GetRoleDescription(role)</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Annuler" ButtonStyle="ButtonStyle.Light" Click="Cancel" class="mr-2" />
+        <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="Save" />
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private DialogService Dialog { get; set; } = default!;
+
+    [Parameter]
+    public EditUserRolesDialogArgs Args { get; set; } = default!;
+
+    private List<string> availableRoles = RoleNames.All.ToList();
+    private List<string> SelectedRoles = new();
+    private string UserName = string.Empty;
+    private ApplicationUser? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userManager = UserService;
+        user = await userManager.FindByIdAsync(Args.UserId);
+        if (user != null)
+        {
+            UserName = $"{user.Prenom} {user.Nom}".Trim();
+            SelectedRoles = (await userManager.GetRolesAsync(user)).ToList();
+        }
+    }
+
+    private void ToggleRole(string role)
+    {
+        if (SelectedRoles.Contains(role))
+        {
+            SelectedRoles.Remove(role);
+        }
+        else
+        {
+            SelectedRoles.Add(role);
+        }
+    }
+
+    private async Task Save()
+    {
+        if (user == null) return;
+
+        var userManager = UserService;
+        var currentRoles = await userManager.GetRolesAsync(user);
+        var rolesToAdd = SelectedRoles.Except(currentRoles);
+        var rolesToRemove = currentRoles.Except(SelectedRoles);
+
+        foreach (var role in rolesToRemove)
+        {
+            await userManager.RemoveFromRoleAsync(user, role);
+        }
+
+        foreach (var role in rolesToAdd)
+        {
+            await userManager.AddToRoleAsync(user, role);
+        }
+
+        Dialog.Close();
+    }
+
+    private void Cancel()
+    {
+        Dialog.Close();
+    }
+
+    private static string GetRoleDescription(string role) => role switch
+    {
+        RoleNames.Administrateur => "Accès complet à tous les modules",
+        RoleNames.Medecin => "Patients, consultations, laboratoire",
+        RoleNames.Infirmier => "Patients, admissions, laboratoire",
+        RoleNames.Receptionniste => "Accueil, rendez-vous, facturation",
+        RoleNames.Pharmacien => "Stocks, prescriptions",
+        RoleNames.Laborantin => "Examens et analyses",
+        _ => "Utilisateur standard"
+    };
+
+    [Inject]
+    private UserManager<ApplicationUser> UserService { get; set; } = default!;
+}

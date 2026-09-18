@@ -1,116 +1,32 @@
 ﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using HospitalManagement.Web.Components.Layout
 
-<RadzenLayout>
-    <RadzenSidebar Style="width: 260px; background-color: #0f2a3f;">
-        <div class="app-brand">
-            <div class="brand-mark">
-                <RadzenIcon Icon="local_hospital" IconColor="White" Size="26" />
+<RadzenDialog />
+<RadzenNotification />
+
+<div class="hospital-shell">
+    <AuthorizeView>
+        <Authorized>
+            <NavMenu />
+
+            <div class="hospital-body">
+                <main class="hospital-main">
+                    @Body
+                </main>
+
+                <footer class="hospital-footer">
+                    <span>Gestion hospitalière — plateforme de pilotage</span>
+                    <span>Session du @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</span>
+                </footer>
             </div>
-            <span>Gestion Hôpital</span>
-        </div>
-
-        <nav class="premium-menu">
-            <div class="menu-section-label">Navigation</div>
-            <a class="nav-item active" href="/">
-                <span class="nav-icon"><RadzenIcon Icon="dashboard" Size="18" /></span>
-                <span>Tableau de bord</span>
-            </a>
-            <a class="nav-item" href="/patients">
-                <span class="nav-icon"><RadzenIcon Icon="person" Size="18" /></span>
-                <span>Patients</span>
-            </a>
-            <a class="nav-item" href="/chambres">
-                <span class="nav-icon"><RadzenIcon Icon="bed" Size="18" /></span>
-                <span>Chambres &amp; Lits</span>
-            </a>
-            <a class="nav-item" href="/personnel">
-                <span class="nav-icon"><RadzenIcon Icon="people" Size="18" /></span>
-                <span>Personnel</span>
-            </a>
-            <a class="nav-item" href="/rendezvous">
-                <span class="nav-icon"><RadzenIcon Icon="event" Size="18" /></span>
-                <span>Rendez-vous</span>
-            </a>
-            <a class="nav-item" href="/facturation">
-                <span class="nav-icon"><RadzenIcon Icon="payments" Size="18" /></span>
-                <span>Facturation</span>
-            </a>
-            <a class="nav-item" href="/pharmacie">
-                <span class="nav-icon"><RadzenIcon Icon="medication" Size="18" /></span>
-                <span>Pharmacie</span>
-            </a>
-            <a class="nav-item" href="/laboratoire">
-                <span class="nav-icon"><RadzenIcon Icon="science" Size="18" /></span>
-                <span>Laboratoire</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <AuthorizeView>
-                <Authorized>
-                    <RadzenButton Text="@context.User.Identity?.Name" Icon="account_circle" ButtonStyle="ButtonStyle.Secondary" Style="width: 100%;" Size="ButtonSize.Small" Click="OnManageClick" />
-                </Authorized>
-                <NotAuthorized>
-                    <RadzenButton Text="Connexion" Icon="login" ButtonStyle="ButtonStyle.Secondary" Style="width: 100%;" Size="ButtonSize.Small" Click="OnLoginClick" />
-                </NotAuthorized>
-            </AuthorizeView>
-        </div>
-    </RadzenSidebar>
-
-    <RadzenHeader Style="background-color: #0f1726; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 12px 20px;">
-        <div class="header-title">@pageTitle</div>
-    </RadzenHeader>
-
-    <RadzenBody>
-        @Body
-    </RadzenBody>
-</RadzenLayout>
-
-<RadzenNotification Style="top: auto; bottom: 12px; right: 12px;" />
-
-<RadzenTooltip />
-
-@code {
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthenticationState { get; set; }
-
-    [Inject]
-    private NavigationManager Nav { get; set; } = default!;
-
-    private string pageTitle = "Gestion Hôpital";
-
-    protected override void OnInitialized()
-    {
-        Nav.LocationChanged += OnLocationChanged;
-        UpdateTitle();
-    }
-
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        UpdateTitle();
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void UpdateTitle()
-    {
-        var path = Nav.ToBaseRelativePath(Nav.Uri);
-        pageTitle = path switch
-        {
-            "" or "index" => "Tableau de bord",
-            "patients" => "Gestion des Patients",
-            "chambres" => "Chambres & Lits",
-            "personnel" => "Gestion du Personnel",
-            "rendezvous" => "Rendez-vous & Consultations",
-            "facturation" => "Facturation",
-            "pharmacie" => "Pharmacie",
-            "laboratoire" => "Laboratoire",
-            _ => "Gestion Hôpital"
-        };
-    }
-
-    private void OnManageClick() => Nav.NavigateTo("Account/Manage");
-
-    private void OnLoginClick() => Nav.NavigateTo("Account/Login");
-
-    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
-}
+        </Authorized>
+        <NotAuthorized>
+            <div class="hospital-body hospital-body-auth">
+                <main class="hospital-main hospital-main-auth">
+                    @Body
+                </main>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

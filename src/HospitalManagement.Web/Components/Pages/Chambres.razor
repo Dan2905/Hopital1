@@ -1,4 +1,5 @@
 @page "/chambres"
+@attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
 
 <PageTitle>Chambres & Lits</PageTitle>
 
@@ -24,7 +25,7 @@
             <RadzenTextArea @bind-Value="chambreModel.Description" Placeholder="Description" />
 
             <RadzenHeading Size="HeadingSize.H5">Lits</RadzenHeading>
-            @if (chambreModel.Id != 0)
+            @if (lits.Count > 0)
             {
                 @foreach (var lit in lits)
                 {
@@ -35,12 +36,8 @@
                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => RemoveLit(lit))" />
                     </RadzenStack>
                 }
-                <RadzenButton Text="Ajouter un lit" Icon="add" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="@AddLit" />
             }
-            else
-            {
-                <RadzenText Text="Enregistrez d'abord la chambre pour ajouter des lits." />
-            }
+            <RadzenButton Text="Ajouter un lit" Icon="add" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="@AddLit" />
 
             <RadzenStack Direction="FlexDirection.Row" Gap="8px">
                 <RadzenButton Text="Enregistrer" ButtonStyle="ButtonStyle.Primary" Click="@SaveChambre" />
@@ -81,6 +78,9 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
+    [Inject]
+    private DialogService Dialog { get; set; } = default!;
+
     private List<Chambre> chambres = new();
     private List<Lit> lits = new();
     private bool isEditing;
@@ -94,7 +94,11 @@
 
     private async Task Load()
     {
-        chambres = await Db.Chambres.Include(c => c.Lits).ToListAsync();
+        chambres = await Db.Chambres
+            .AsNoTracking()
+            .Include(c => c.Lits)
+            .OrderBy(c => c.Numero)
+            .ToListAsync();
     }
 
     private void OpenNewChambre()
@@ -132,35 +136,103 @@
 
     private async Task SaveChambre()
     {
+        if (string.IsNullOrWhiteSpace(chambreModel.Numero))
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", "Le numéro de chambre est obligatoire.");
+            return;
+        }
+
+        if (chambreModel.TarifJournalier < 0)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", "Le tarif journalier ne peut pas être négatif.");
+            return;
+        }
+
+        var duplicateBedNumber = lits
+            .Where(lit => !string.IsNullOrWhiteSpace(lit.Numero))
+            .GroupBy(lit => lit.Numero.Trim(), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+        if (duplicateBedNumber is not null)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", $"Le numéro de lit « {duplicateBedNumber.Key} » est dupliqué.");
+            return;
+        }
+
+        var normalizedRoomNumber = chambreModel.Numero.Trim();
+        var roomNumberExists = await Db.Chambres
+            .AsNoTracking()
+            .AnyAsync(chambre => chambre.Id != editingChambreId && chambre.Numero == normalizedRoomNumber);
+        if (roomNumberExists)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", "Ce numéro de chambre existe déjà.");
+            return;
+        }
+
         if (editingChambreId == 0)
         {
+            chambreModel.Numero = normalizedRoomNumber;
+            chambreModel.Statut = GetRoomStatus(lits);
             Db.Chambres.Add(chambreModel);
+            await Db.SaveChangesAsync();
+
+            foreach (var lit in lits)
+            {
+                lit.Id = 0;
+                lit.ChambreId = chambreModel.Id;
+                lit.Chambre = null;
+                Db.Lits.Add(lit);
+            }
         }
         else
         {
-            var existing = await Db.Chambres.Include(c => c.Lits).FirstOrDefaultAsync(c => c.Id == editingChambreId);
-            if (existing != null)
+            var existing = await Db.Chambres
+                .Include(c => c.Lits)
+                .FirstOrDefaultAsync(c => c.Id == editingChambreId);
+            if (existing is null)
             {
-                existing.Numero = chambreModel.Numero;
-                existing.Etage = chambreModel.Etage;
-                existing.Type = chambreModel.Type;
-                existing.Statut = chambreModel.Statut;
-                existing.TarifJournalier = chambreModel.TarifJournalier;
-                existing.Description = chambreModel.Description;
-                existing.UpdatedAt = DateTime.UtcNow;
-
-                // Update/add lits
-                existing.Lits?.Clear();
+                Notification.Notify(NotificationSeverity.Error, "Erreur", "La chambre est introuvable.");
+                return;
             }
-            chambreModel.Id = 0;
-        }
-        await Db.SaveChangesAsync();
 
-        // Handle lits for new chambre or re-add
-        if (editingChambreId == 0)
-        {
-            await Db.SaveChangesAsync();
+            existing.Numero = normalizedRoomNumber;
+            existing.Etage = chambreModel.Etage;
+            existing.Type = chambreModel.Type;
+            existing.TarifJournalier = chambreModel.TarifJournalier;
+            existing.Description = chambreModel.Description;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            var submittedBedIds = lits.Where(lit => lit.Id > 0).Select(lit => lit.Id).ToHashSet();
+            foreach (var removedBed in existing.Lits.Where(lit => !submittedBedIds.Contains(lit.Id)).ToList())
+            {
+                Db.Lits.Remove(removedBed);
+            }
+
+            foreach (var submittedBed in lits)
+            {
+                if (submittedBed.Id == 0)
+                {
+                    existing.Lits.Add(new Lit
+                    {
+                        Numero = submittedBed.Numero.Trim(),
+                        Statut = submittedBed.Statut,
+                        EstAdapteEnfant = submittedBed.EstAdapteEnfant
+                    });
+                    continue;
+                }
+
+                var existingBed = existing.Lits.FirstOrDefault(lit => lit.Id == submittedBed.Id);
+                if (existingBed is not null)
+                {
+                    existingBed.Numero = submittedBed.Numero.Trim();
+                    existingBed.Statut = submittedBed.Statut;
+                    existingBed.EstAdapteEnfant = submittedBed.EstAdapteEnfant;
+                }
+            }
+
+            existing.Statut = GetRoomStatus(existing.Lits);
         }
+
+        await Db.SaveChangesAsync();
 
         Notification.Notify(NotificationSeverity.Success, "Enregistré", "La chambre a été enregistrée.");
         isEditing = false;
@@ -171,9 +243,23 @@
 
     private async Task DeleteChambre(Chambre c)
     {
+        if (!await Dialog.ConfirmDeleteAsync($"la chambre {c.Numero}", "La chambre doit être vide avant sa suppression."))
+        {
+            return;
+        }
+
+        if (c.Lits?.Any(lit => lit.Admissions.Any(admission => admission.Statut == StatutAdmission.EnCours)) == true)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Action impossible", "Cette chambre contient un lit lié à une admission en cours.");
+            return;
+        }
+
         Db.Chambres.Remove(c);
         await Db.SaveChangesAsync();
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "La chambre a été supprimée.");
         await Load();
     }
+
+    private static StatutChambre GetRoomStatus(IEnumerable<Lit> beds)
+        => RoomStatusCalculator.Calculate(beds.Select(bed => bed.Statut));
 }

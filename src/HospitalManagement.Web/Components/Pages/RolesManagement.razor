@@ -1,0 +1,93 @@
+@page "/roles"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Identity
+@using HospitalManagement.Infrastructure.Identity
+@using HospitalManagement.Web.Components.Dialogs
+@using HospitalManagement.Web.Components.Layout
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+@inject DialogService Dialog
+
+<PageTitle>Gestion des rôles - Gestion hospitalière</PageTitle>
+
+<div class="roles-page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Administration</p>
+            <h2>Gestion des rôles</h2>
+        </div>
+        <div class="header-actions">
+            <RadzenButton Text="Nouvel utilisateur" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="@CreateUser" />
+        </div>
+    </header>
+
+    <section class="users-section">
+        <h3>Liste des utilisateurs</h3>
+        <RadzenDataGrid Data="@allUsers" AllowPaging="true" PageSize="15" AllowSorting="true" Responsive="true" TItem="ApplicationUser" RowSelect="@GoToUserDetail">
+            <Columns>
+                <RadzenDataGridColumn Property="Email" Title="Utilisateur" />
+                <RadzenDataGridColumn Title="Rôles">
+                    <Template Context="user">
+                        <span class="badge bg-secondary">@string.Join(", ", GetRolesForUser(user))</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="EstActif" Title="Statut" />
+                <RadzenDataGridColumn Title="Actions">
+                    <Template Context="user">
+                        <RadzenButton Text="Détail" Icon="visibility" Size="ButtonSize.Small" Style="margin-right:6px" Click="@(() => GoToUserDetail(user))" />
+                        <RadzenButton Text="Modifier" Icon="edit" Size="ButtonSize.Small" Click="@(() => EditRoles(user))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </section>
+
+    <section class="roles-reference">
+        <h3>Rôles disponibles</h3>
+        <div class="roles-grid">
+            @foreach (var role in RoleNames.All)
+            {
+                <div class="role-card">
+                    <h4>@RoleNames.GetLabel(role)</h4>
+                    <p>@GetRoleDescription(role)</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<ApplicationUser> allUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        allUsers = await UserManager.Users.ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<string>> GetRolesForUser(ApplicationUser user)
+        => (await UserManager.GetRolesAsync(user)).ToList();
+
+    private void CreateUser() => Navigation.NavigateTo("/Account/Register");
+
+    private void GoToUserDetail(ApplicationUser user) => Navigation.NavigateTo($"/user/{user.Id}");
+
+    private async Task EditRoles(ApplicationUser user)
+    {
+        var currentRoles = (await UserManager.GetRolesAsync(user)).ToList();
+        Dialog.Open<EditUserRolesDialog>(
+            "Modifier les rôles",
+            new Dictionary<string, object?> { ["Args"] = new EditUserRolesDialogArgs(user.Id, currentRoles) },
+            new DialogOptions() { Width = "420px" });
+    }
+
+    private static string GetRoleDescription(string role) => role switch
+    {
+        RoleNames.Administrateur => "Accès complet à tous les modules",
+        RoleNames.Medecin => "Patients, consultations, laboratoire",
+        RoleNames.Infirmier => "Patients, admissions, laboratoire",
+        RoleNames.Receptionniste => "Accueil, rendez-vous, facturation",
+        RoleNames.Pharmacien => "Stocks, prescriptions",
+        RoleNames.Laborantin => "Examens, analyses",
+        _ => "Utilisateur standard"
+    };
+}

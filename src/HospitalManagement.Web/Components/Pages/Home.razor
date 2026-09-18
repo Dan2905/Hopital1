@@ -1,91 +1,431 @@
 ﻿@page "/"
+@attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
+@using System.Globalization
+@using Microsoft.AspNetCore.Identity
+@using HospitalManagement.Web.Components.Layout
+@inject AuthenticationStateProvider AuthState
+@inject UserManager<ApplicationUser> UserManager
 
-<PageTitle>Tableau de bord</PageTitle>
+<PageTitle>Tableau de bord — Gestion hospitalière</PageTitle>
 
-<div class="dashboard-shell">
-    <div class="dashboard-header">
-        <div class="header-row">
+<div class="premium-dashboard">
+    <header class="hero-banner">
+        <div class="hero-banner-text">
+            <p class="eyebrow premium">Tableau de bord</p>
+            <h1>@GreetingTitle</h1>
+            <p class="hero-banner-sub">@TodayLabel — @SummaryLine</p>
+        </div>
+
+        <div class="hero-banner-actions">
+            @if (CanAccessPatients)
+            {
+                <a class="primary-action" href="patients">
+                    <RadzenIcon Icon="person_add" />
+                    <span>Nouveau patient</span>
+                </a>
+            }
+            @if (CanAccessRendezVous)
+            {
+                <a class="secondary-action" href="rendezvous">
+                    <RadzenIcon Icon="event_available" />
+                    <span>Planifier un rendez-vous</span>
+                </a>
+            }
+        </div>
+    </header>
+
+    <div class="status-strip">
+        <span class="status-badge live">En ligne</span>
+        <span class="status-badge stable">Système stable</span>
+        <span class="status-badge info">@snapshot.UpcomingAppointments rendez-vous à venir</span>
+        <span class="status-badge">Dernière actualisation : @snapshot.GeneratedAt.ToString("HH:mm")</span>
+    </div>
+
+    <section class="kpi-grid">
+        <a class="kpi-card blue" href="patients">
+            <div class="kpi-head">
+                <span class="kpi-icon"><RadzenIcon Icon="people" /></span>
+                <span class="kpi-label">Patients</span>
+            </div>
+            <div class="kpi-value">@snapshot.TotalPatients</div>
+            <div class="kpi-trend neutral">@snapshot.ActivePatients dossiers actifs</div>
+        </a>
+
+        <a class="kpi-card purple" href="rendezvous">
+            <div class="kpi-head">
+                <span class="kpi-icon"><RadzenIcon Icon="event_available" /></span>
+                <span class="kpi-label">Rendez-vous du jour</span>
+            </div>
+            <div class="kpi-value">@snapshot.TodayAppointments</div>
+            <div class="kpi-trend neutral">@snapshot.UpcomingAppointments à venir</div>
+        </a>
+
+        <a class="kpi-card green" href="chambres">
+            <div class="kpi-head">
+                <span class="kpi-icon"><RadzenIcon Icon="hotel" /></span>
+                <span class="kpi-label">Occupation des lits</span>
+            </div>
+            <div class="kpi-value">@snapshot.OccupancyRate %</div>
+            <div class="kpi-trend neutral">
+                @snapshot.OccupiedBeds occupés sur @snapshot.TotalBeds
+            </div>
+        </a>
+
+        <a class="kpi-card orange" href="facturation">
+            <div class="kpi-head">
+                <span class="kpi-icon"><RadzenIcon Icon="payments" /></span>
+                <span class="kpi-label">Encaissé ce mois</span>
+            </div>
+            <div class="kpi-value">@FormatAmount(snapshot.MonthRevenue)</div>
+            <div class="kpi-trend neutral">
+                @snapshot.UnpaidInvoices factures à recouvrer
+            </div>
+        </a>
+    </section>
+
+    <section class="panel quick-access-panel">
+        <div class="panel-header">
             <div>
-                <p class="eyebrow">Aperçu général</p>
-                <h2>Tableau de bord</h2>
+                <p class="panel-kicker">Navigation</p>
+                <h2>Modules de l'application</h2>
             </div>
-            <div class="header-badges">
-                <span class="status-badge online">En ligne</span>
-                <span class="status-badge warning">Système stable</span>
-            </div>
+            <span class="panel-hint">@VisibleQuickAccess.Count modules</span>
         </div>
-    </div>
 
-    <div class="stat-grid">
-        <div class="stat-card card-blue">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="person" Size="18" /></span>
-                <span class="stat-tag">Patients</span>
-            </div>
-            <div class="stat-num">@patientCount</div>
-            <div class="stat-label">Total patients</div>
+        <div class="quick-access-grid">
+            @foreach (var module in VisibleQuickAccess)
+            {
+                var metric = GetModuleMetric(module);
+
+                <a class="quick-tile" href="@module.Url" title="@module.Description">
+                    <span class="quick-tile-icon @module.Tone">
+                        <RadzenIcon Icon="@module.Icon" />
+                    </span>
+                    <span class="quick-tile-label">@module.Label</span>
+                    <span class="quick-tile-desc">@module.Description</span>
+                    <span class="quick-tile-meta">
+                        <strong>@metric.Value</strong>
+                        <span>@metric.Caption</span>
+                    </span>
+                </a>
+            }
         </div>
-        <div class="stat-card card-purple">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="event" Size="18" /></span>
-                <span class="stat-tag">Agenda</span>
+    </section>
+
+    <section class="analytics-grid">
+        <article class="panel chart-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Activité médicale</p>
+                    <h2>Consultations des 6 derniers mois</h2>
+                </div>
+                <span class="panel-hint">@TotalConsultations consultations</span>
             </div>
-            <div class="stat-num">@rdvCount</div>
-            <div class="stat-label">Rendez-vous</div>
-        </div>
-        <div class="stat-card card-green">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="bed" Size="18" /></span>
-                <span class="stat-tag">Hospitalisation</span>
+
+            @if (snapshot.HasConsultationActivity)
+            {
+                <RadzenChart Style="height: 280px; width: 100%;">
+                    <RadzenLineSeries Smooth="true"
+                                      Data="@snapshot.ConsultationsByMonth"
+                                      CategoryProperty="Label"
+                                      ValueProperty="Count"
+                                      Title="Consultations">
+                        <RadzenMarkers MarkerType="MarkerType.Circle" />
+                    </RadzenLineSeries>
+                    <RadzenCategoryAxis Formatter="@(value => value?.ToString())" />
+                    <RadzenValueAxis Min="0" />
+                    <RadzenLegend Visible="false" />
+                </RadzenChart>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <RadzenIcon Icon="insights" />
+                    <p>Aucune consultation enregistrée sur les six derniers mois.</p>
+                </div>
+            }
+        </article>
+
+        <article class="panel performance-panel">
+            <div class="panel-header compact">
+                <div>
+                    <p class="panel-kicker">Capacité</p>
+                    <h2>Occupation des lits</h2>
+                </div>
+                <span class="panel-hint">@snapshot.OccupancyRate %</span>
             </div>
-            <div class="stat-num">@admissionCount</div>
-            <div class="stat-label">Admissions</div>
-        </div>
-        <div class="stat-card card-orange">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="payments" Size="18" /></span>
-                <span class="stat-tag">Finances</span>
+
+            @if (snapshot.TotalBeds == 0)
+            {
+                <div class="empty-state small">
+                    <RadzenIcon Icon="hotel" />
+                    <p>Aucun lit référencé dans les chambres.</p>
+                </div>
+            }
+            else
+            {
+                <div class="occupancy-list">
+                    @foreach (var item in snapshot.BedOccupancy)
+                    {
+                        <div class="occupancy-item">
+                            <div class="occupancy-label">
+                                <span class="dot @item.Tone"></span>
+                                <span>@item.Label</span>
+                            </div>
+                            <div class="occupancy-bar">
+                                <span style="width:@item.Percent%"></span>
+                            </div>
+                            <strong>@item.Count</strong>
+                        </div>
+                    }
+                </div>
+
+                <p class="occupancy-footnote">
+                    @snapshot.FreeBeds lits disponibles sur @snapshot.TotalBeds au total.
+                </p>
+            }
+        </article>
+    </section>
+
+    <section class="bottom-grid">
+        <article class="panel schedule-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Agenda</p>
+                    <h2>Prochains rendez-vous</h2>
+                </div>
+                <a class="chip-button" href="rendezvous">Ouvrir l'agenda</a>
             </div>
-            <div class="stat-num">@factureCount</div>
-            <div class="stat-label">Factures</div>
-        </div>
-        <div class="stat-card card-rose">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="medication" Size="18" /></span>
-                <span class="stat-tag">Pharmacie</span>
+
+            @if (snapshot.NextAppointments.Count == 0)
+            {
+                <div class="empty-state">
+                    <RadzenIcon Icon="event_available" />
+                    <p>Aucun rendez-vous à venir dans l'agenda.</p>
+                </div>
+            }
+            else
+            {
+                <div class="appointment-list">
+                    @foreach (var appointment in snapshot.NextAppointments)
+                    {
+                        <div class="appointment-row">
+                            <div class="time-block">
+                                <strong>@appointment.TimeLabel</strong>
+                                <span>@appointment.DayLabel</span>
+                            </div>
+                            <div class="appointment-info">
+                                <h3>@appointment.PatientName</h3>
+                                <p>@appointment.PractitionerName — @appointment.Motif</p>
+                            </div>
+                            <span class="tag @appointment.StatusTone">@appointment.StatusLabel</span>
+                        </div>
+                    }
+                </div>
+            }
+        </article>
+
+        <article class="panel activity-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Supervision</p>
+                    <h2>Indicateurs clés</h2>
+                </div>
             </div>
-            <div class="stat-num">@medicamentCount</div>
-            <div class="stat-label">Médicaments</div>
-        </div>
-        <div class="stat-card card-cyan">
-            <div class="stat-topline">
-                <span class="mini-icon"><RadzenIcon Icon="science" Size="18" /></span>
-                <span class="stat-tag">Lab</span>
+
+            <div class="mini-stats">
+                <div class="mini-stat">
+                    <span class="mini-label">Admissions en cours</span>
+                    <strong>@snapshot.OngoingAdmissions</strong>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-label">Analyses en attente</span>
+                    <strong>@snapshot.PendingAnalyses</strong>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-label">Factures à recouvrer</span>
+                    <strong>@snapshot.UnpaidInvoices</strong>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-label">Personnel actif</span>
+                    <strong>@snapshot.ActiveStaff</strong>
+                </div>
             </div>
-            <div class="stat-num">@analyseCount</div>
-            <div class="stat-label">Analyses</div>
-        </div>
-    </div>
+
+            <div class="alert-block">
+                <div class="alert-header">
+                    <RadzenIcon Icon="warning" />
+                    <span>Alertes de stock (@snapshot.LowStockMedicines)</span>
+                </div>
+
+                @if (snapshot.StockAlerts.Count == 0)
+                {
+                    <p class="alert-empty">Aucun médicament sous le seuil d'alerte.</p>
+                }
+                else
+                {
+                    <ul class="alert-list">
+                        @foreach (var alert in snapshot.StockAlerts)
+                        {
+                            <li>
+                                <span class="alert-name">@alert.Name</span>
+                                <span class="alert-value">@alert.Stock / seuil @alert.Threshold</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </article>
+    </section>
+
+    <section class="custom-kpi-panel">
+        @if (User.IsInRole(RoleNames.Administrateur))
+        {
+            <div class="panel-header">
+                <div>
+                    <p class="panel-kicker">Administration</p>
+                    <h2>Statistiques complètes</h2>
+                </div>
+            </div>
+            <div class="admin-stats-grid">
+                <div class="admin-stat-card">
+                    <div class="stat-value">@snapshot.TotalPatients</div>
+                    <div class="stat-label">Total patients</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-value">@snapshot.ActiveStaff</div>
+                    <div class="stat-label">Personnel actif</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-value">@snapshot.OngoingAdmissions</div>
+                    <div class="stat-label">Admissions en cours</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-value">@snapshot.UnpaidInvoices</div>
+                    <div class="stat-label">Factures impayées</div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <section class="report-grid" aria-label="Rapports de synthèse">
+        <article class="panel report-panel">
+            <div class="panel-header compact">
+                <div>
+                    <p class="panel-kicker">Finance</p>
+                    <h2>Revenus du mois</h2>
+                </div>
+                <RadzenIcon Icon="payments" />
+            </div>
+            <strong class="report-value">@FormatAmount(snapshot.MonthRevenue)</strong>
+            <p class="report-caption">@FormatAmount(snapshot.OutstandingAmount) restent à recouvrer.</p>
+            <a class="report-link" href="facturation">Voir la facturation <RadzenIcon Icon="arrow_forward" /></a>
+        </article>
+
+        <article class="panel report-panel">
+            <div class="panel-header compact">
+                <div>
+                    <p class="panel-kicker">Activité médicale</p>
+                    <h2>Consultations</h2>
+                </div>
+                <RadzenIcon Icon="monitor_heart" />
+            </div>
+            <strong class="report-value">@TotalConsultations</strong>
+            <p class="report-caption">Consultations enregistrées sur les six derniers mois.</p>
+            <a class="report-link" href="rendezvous">Voir l'agenda <RadzenIcon Icon="arrow_forward" /></a>
+        </article>
+
+        <article class="panel report-panel">
+            <div class="panel-header compact">
+                <div>
+                    <p class="panel-kicker">Stocks</p>
+                    <h2>Alertes actives</h2>
+                </div>
+                <RadzenIcon Icon="inventory_2" />
+            </div>
+            <strong class="report-value">@snapshot.LowStockMedicines</strong>
+            <p class="report-caption">Médicaments sous leur seuil minimum.</p>
+            <a class="report-link" href="pharmacie">Gérer les stocks <RadzenIcon Icon="arrow_forward" /></a>
+        </article>
+    </section>
 </div>
 
 @code {
-    [Inject]
-    private ApplicationDbContext Db { get; set; } = default!;
+    private static readonly CultureInfo FrenchCulture = CultureInfo.GetCultureInfo("fr-FR");
 
-    private int patientCount;
-    private int rdvCount;
-    private int admissionCount;
-    private int factureCount;
-    private int medicamentCount;
-    private int analyseCount;
+    [Inject]
+    private DashboardService Dashboard { get; set; } = default!;
+
+    private DashboardSnapshot snapshot = DashboardSnapshot.Empty;
+    private IReadOnlyDictionary<string, ModuleMetric> moduleMetrics =
+        new Dictionary<string, ModuleMetric>();
+    private string? userFirstName;
+    private ClaimsPrincipal? currentUser;
+
+    private string GreetingTitle => string.IsNullOrWhiteSpace(userFirstName)
+        ? "Tableau de bord hospitalier"
+        : $"Bonjour, {userFirstName}";
+
+    private string TodayLabel => DateTime.Now.ToString("dddd d MMMM yyyy", FrenchCulture);
+
+    private string SummaryLine =>
+        $"{snapshot.TodayAppointments} rendez-vous aujourd'hui, "
+        + $"{snapshot.OccupiedBeds} lit(s) occupé(s), "
+        + $"{snapshot.LowStockMedicines} alerte(s) de stock";
+
+    private int TotalConsultations => snapshot.ConsultationsByMonth.Sum(point => point.Count);
+
+    private string FormatAmount(decimal amount) => $"{amount.ToString("N0", FrenchCulture)} €";
 
     protected override async Task OnInitializedAsync()
     {
-        patientCount = await Db.Patients.CountAsync();
-        rdvCount = await Db.RendezVous.CountAsync();
-        admissionCount = await Db.Admissions.CountAsync();
-        factureCount = await Db.Factures.CountAsync();
-        medicamentCount = await Db.Medicaments.CountAsync();
-        analyseCount = await Db.Analyses.CountAsync();
+        snapshot = await Dashboard.GetSnapshotAsync();
+        moduleMetrics = BuildModuleMetrics(snapshot);
+        await LoadCurrentUserAsync();
     }
+
+    private ModuleMetric GetModuleMetric(AppModule module) =>
+        moduleMetrics.TryGetValue(module.Url, out var metric) ? metric : new ModuleMetric(0, "à jour");
+
+    private static IReadOnlyDictionary<string, ModuleMetric> BuildModuleMetrics(DashboardSnapshot data) =>
+        new Dictionary<string, ModuleMetric>
+        {
+            ["/patients"] = new(data.TotalPatients, "dossiers"),
+            ["/rendezvous"] = new(data.TodayAppointments, "aujourd'hui"),
+            ["/chambres"] = new(data.OccupiedBeds, "lits occupés"),
+            ["/laboratoire"] = new(data.PendingAnalyses, "analyses en attente"),
+            ["/pharmacie"] = new(data.LowStockMedicines, "alertes de stock"),
+            ["/personnel"] = new(data.ActiveStaff, "agents actifs"),
+            ["/facturation"] = new(data.UnpaidInvoices, "factures à recouvrer")
+        };
+
+    private async Task LoadCurrentUserAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        currentUser = state.User;
+
+        if (currentUser.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var user = await UserManager.GetUserAsync(currentUser);
+        if (user is not null && !string.IsNullOrWhiteSpace(user.Prenom))
+        {
+            userFirstName = user.Prenom;
+        }
+    }
+
+    private bool CanAccessPatients => User.HasAnyRole(RoleNames.ParcoursPatient.ToArray());
+    private bool CanAccessRendezVous => User.HasAnyRole(RoleNames.ParcoursPatient.ToArray());
+    private bool CanAccessChambres => User.HasAnyRole(RoleNames.ParcoursPatient.ToArray());
+    private bool CanAccessFacturation => User.HasAnyRole(RoleNames.Facturation.ToArray());
+    private IReadOnlyList<AppModule> VisibleQuickAccess =>
+        AppModuleCatalog.QuickAccess
+            .Where(module => AppModuleCatalog.MayAccess(module, User))
+            .ToList();
+
+    private sealed record ModuleMetric(int Value, string Caption);
+
+    private ClaimsPrincipal User => currentUser!;
 }
