@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using HospitalManagement.Web.Components.Layout
 
+<<<<<<< HEAD
 <RadzenDialog />
 <RadzenNotification />
 
@@ -30,3 +31,112 @@
         </NotAuthorized>
     </AuthorizeView>
 </div>
+=======
+<RadzenLayout class="medicare-layout">
+    <RadzenSidebar class="medicare-sidebar" Style="width: 260px;">
+        <div class="app-brand">
+            <div class="brand-mark">
+                <RadzenIcon Icon="favorite" IconColor="White" Size="22" />
+            </div>
+            <span>MediCare</span>
+            <span class="collapse-indicator"><RadzenIcon Icon="chevron_left" IconColor="#4d6478" Size="18" /></span>
+        </div>
+
+        <nav class="premium-menu">
+            <a class="nav-item active" href="/">
+                <span class="nav-icon"><RadzenIcon Icon="dashboard" Size="18" /></span>
+                <span>Tableau de bord</span>
+            </a>
+            <a class="nav-item" href="/patients">
+                <span class="nav-icon"><RadzenIcon Icon="person" Size="18" /></span>
+                <span>Patients</span>
+            </a>
+            <a class="nav-item" href="/chambres">
+                <span class="nav-icon"><RadzenIcon Icon="bed" Size="18" /></span>
+                <span>Chambres &amp; lits</span>
+            </a>
+            <a class="nav-item" href="/personnel">
+                <span class="nav-icon"><RadzenIcon Icon="people" Size="18" /></span>
+                <span>Personnel</span>
+            </a>
+            <a class="nav-item" href="/rendezvous">
+                <span class="nav-icon"><RadzenIcon Icon="event" Size="18" /></span>
+                <span>Rendez-vous</span>
+            </a>
+            <a class="nav-item" href="/facturation">
+                <span class="nav-icon"><RadzenIcon Icon="payments" Size="18" /></span>
+                <span>Facturation</span>
+            </a>
+            <a class="nav-item" href="/pharmacie">
+                <span class="nav-icon"><RadzenIcon Icon="medication" Size="18" /></span>
+                <span>Pharmacie</span>
+            </a>
+            <a class="nav-item" href="/laboratoire">
+                <span class="nav-icon"><RadzenIcon Icon="science" Size="18" /></span>
+                <span>Laboratoire</span>
+            </a>
+        </nav>
+
+        <div class="system-box">
+            <div class="system-header">SYSTÈME</div>
+            <div class="system-status">
+                <span class="status-dot"></span>
+                Tous les services sont stables
+            </div>
+        </div>
+    </RadzenSidebar>
+
+    <RadzenBody>
+        @Body
+    </RadzenBody>
+</RadzenLayout>
+
+<RadzenNotification Style="top: auto; bottom: 12px; right: 12px;" />
+
+<RadzenTooltip />
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    [Inject]
+    private NavigationManager Nav { get; set; } = default!;
+
+    private string pageTitle = "Gestion Hôpital";
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        UpdateTitle();
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        UpdateTitle();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateTitle()
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri);
+        pageTitle = path switch
+        {
+            "" or "index" => "Tableau de bord",
+            "patients" => "Gestion des Patients",
+            "chambres" => "Chambres & Lits",
+            "personnel" => "Gestion du Personnel",
+            "rendezvous" => "Rendez-vous & Consultations",
+            "facturation" => "Facturation",
+            "pharmacie" => "Pharmacie",
+            "laboratoire" => "Laboratoire",
+            _ => "Gestion Hôpital"
+        };
+    }
+
+    private void OnManageClick() => Nav.NavigateTo("Account/Manage");
+
+    private void OnLoginClick() => Nav.NavigateTo("Account/Login");
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
+>>>>>>> 21c83eaf054d7c9015acaa85841f85d323abe594

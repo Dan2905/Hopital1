@@ -18,3 +18,4 @@ C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructur
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.pdb
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.genruntimeconfig.cache
 C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\ref\HospitalManagement.Infrastructure.dll
+C:\Users\divulu\Desktop\Dev\Gestion_Hopital\src\HospitalManagement.Infrastructure\obj\Debug\net10.0\HospitalManagement.Infrastructure.sourcelink.json
