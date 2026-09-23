@@ -13,6 +13,8 @@ public class ExamenLaboratoireConfiguration : IEntityTypeConfiguration<ExamenLab
         builder.Property(e => e.Code).HasMaxLength(30);
         builder.Property(e => e.Description).HasMaxLength(500);
         builder.Property(e => e.Prix).HasColumnType("decimal(18,2)");
+        builder.Property(e => e.ValeurMinNormale).HasColumnType("decimal(18,2)");
+        builder.Property(e => e.ValeurMaxNormale).HasColumnType("decimal(18,2)");
         builder.Property(e => e.Unite).HasMaxLength(20);
         builder.HasIndex(e => e.Code).IsUnique();
     }
@@ -55,6 +57,8 @@ public class ResultatAnalyseConfiguration : IEntityTypeConfiguration<ResultatAna
         builder.Property(r => r.Parametre).HasMaxLength(150);
         builder.Property(r => r.Valeur).HasMaxLength(100);
         builder.Property(r => r.Unite).HasMaxLength(20);
+        builder.Property(r => r.ValeurMinNormale).HasColumnType("decimal(18,2)");
+        builder.Property(r => r.ValeurMaxNormale).HasColumnType("decimal(18,2)");
         builder.Property(r => r.Commentaire).HasMaxLength(500);
 
         builder.HasOne(r => r.Analyse)

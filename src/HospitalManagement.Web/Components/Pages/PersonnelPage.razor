@@ -1,12 +1,17 @@
 @page "/personnel"
 @attribute [Authorize(Roles = "Admin")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Gestion du Personnel</PageTitle>
 
 <div class="page-card">
     <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
         <RadzenHeading Size="HeadingSize.H3">Personnel</RadzenHeading>
-        <RadzenButton Text="Nouveau membre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+                @if (CanWrite)
+        {
+            <RadzenButton Text="Nouveau membre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+        }
     </RadzenStack>
 
     @if (isEditing)
@@ -47,8 +52,11 @@
                 <RadzenDataGridColumn Property="EstActif" Title="Actif" />
                 <RadzenDataGridColumn Title="">
                     <Template>
+                                            @if (CanWrite)
+                    {
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -66,6 +74,13 @@
     [Inject]
     private DialogService Dialog { get; set; } = default!;
 
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.AdministrationOnly);
+
     private List<Personnel> personnels = new();
     private List<Departement> departements = new();
     private bool isEditing;
@@ -74,6 +89,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
     }
 
@@ -85,6 +109,12 @@
 
     private void OpenNew()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer un membre du personnel.");
+            return;
+        }
+
         editingId = 0;
         model = new Personnel { Type = TypePersonnel.Medecin, EstActif = true };
         isEditing = true;
@@ -92,6 +122,12 @@
 
     private void OpenEdit(Personnel p)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de modifier un membre du personnel.");
+            return;
+        }
+
         editingId = p.Id;
         model = new Personnel
         {
@@ -114,6 +150,12 @@
 
     private async Task Save()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer un membre du personnel.");
+            return;
+        }
+
         if (editingId == 0)
         {
             Db.Personnels.Add(model);
@@ -147,6 +189,12 @@
 
     private async Task Delete(Personnel p)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer un membre du personnel.");
+            return;
+        }
+
         if (!await Dialog.ConfirmDeleteAsync($"le membre {p.NomComplet}"))
         {
             return;

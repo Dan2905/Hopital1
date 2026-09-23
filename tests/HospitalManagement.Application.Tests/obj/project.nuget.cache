@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "CA7HERBcM/Y=",
+  "dgSpecHash": "6FaxBGF/qFg=",
   "success": true,
-  "projectFilePath": "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
+  "projectFilePath": "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\divulu\\.nuget\\packages\\microsoft.codecoverage\\17.14.1\\microsoft.codecoverage.17.14.1.nupkg.sha512",
     "C:\\Users\\divulu\\.nuget\\packages\\microsoft.net.test.sdk\\17.14.1\\microsoft.net.test.sdk.17.14.1.nupkg.sha512",

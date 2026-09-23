@@ -1,12 +1,17 @@
 @page "/facturation"
 @attribute [Authorize(Roles = "Admin,Receptionniste")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Facturation</PageTitle>
 
 <div class="page-card">
     <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
         <RadzenHeading Size="HeadingSize.H3">Facturation</RadzenHeading>
-        <RadzenButton Text="Nouvelle facture" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+                @if (CanWrite)
+        {
+            <RadzenButton Text="Nouvelle facture" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+        }
     </RadzenStack>
 
     <RadzenStack Direction="FlexDirection.Row" Gap="12px" AlignItems="AlignItems.Center" Style="margin-bottom: 16px;">
@@ -45,11 +50,11 @@
                     </RadzenStack>
                     <RadzenStack Gap="4px" Style="flex:0 0 110px">
                         <RadzenLabel Text="Quantité" />
-                        <RadzenNumeric @bind-Value="ligne.Quantite" Min="1" Change="@RecalculateTotal" />
+                        <RadzenNumeric TValue="int" @bind-Value="ligne.Quantite" Min="1" Change="@(_ => RecalculateTotal())" />
                     </RadzenStack>
                     <RadzenStack Gap="4px" Style="flex:0 0 160px">
                         <RadzenLabel Text="Prix unitaire" />
-                        <RadzenNumeric @bind-Value="ligne.PrixUnitaire" Format="C2" Min="0" Change="@RecalculateTotal" />
+                        <RadzenNumeric TValue="decimal" @bind-Value="ligne.PrixUnitaire" Format="C2" Min="0m" Change="@(_ => RecalculateTotal())" />
                     </RadzenStack>
                     <RadzenText Style="min-width:110px; text-align:right">@ligne.Montant.ToString("C2")</RadzenText>
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => RemoveLigne(ligne))" />
@@ -60,7 +65,7 @@
                 <RadzenText><strong>Total : @model.MontantTotal.ToString("C2")</strong></RadzenText>
                 <RadzenStack Gap="4px" Style="width:200px">
                     <RadzenLabel Text="Montant payé" />
-                    <RadzenNumeric @bind-Value="model.MontantPaye" Format="C2" Min="0" />
+                    <RadzenNumeric TValue="decimal" @bind-Value="model.MontantPaye" Format="C2" Min="0m" />
                 </RadzenStack>
             </RadzenStack>
             <RadzenStack Direction="FlexDirection.Row" Gap="8px">
@@ -102,9 +107,12 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Title="" Sortable="false" Width="230px">
                     <Template>
-                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Détail / paiements" Click="@(() => OpenPayments(context!))" />
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(context!))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context!))" />
+                                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Title="Détail / paiements" Click="@(() => OpenPayments(context!))" />
+                        @if (CanWrite)
+                        {
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(context!))" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context!))" />
+                        }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -130,7 +138,7 @@
                 <RadzenStack Direction="FlexDirection.Row" Gap="8px" AlignItems="AlignItems.End">
                     <RadzenStack Gap="4px" Style="width:200px">
                         <RadzenLabel Text="Montant" />
-                        <RadzenNumeric @bind-Value="paymentAmount" Format="C2" Min="0.01" />
+                        <RadzenNumeric TValue="decimal" @bind-Value="paymentAmount" Format="C2" Min="0.01m" />
                     </RadzenStack>
                     <RadzenStack Gap="4px" Style="width:200px">
                         <RadzenLabel Text="Mode" />
@@ -140,7 +148,10 @@
                         <RadzenLabel Text="Référence" />
                         <RadzenTextBox @bind-Value="paymentReference" Placeholder="Référence / reçu" />
                     </RadzenStack>
-                    <RadzenButton Text="Encaisser" Icon="payments" ButtonStyle="ButtonStyle.Success" Click="@RegisterPayment" Disabled="@(selectedFacture.MontantRestant <= 0)" />
+                                        @if (CanWrite)
+                    {
+                        <RadzenButton Text="Encaisser" Icon="payments" ButtonStyle="ButtonStyle.Success" Click="@RegisterPayment" Disabled="@(selectedFacture.MontantRestant <= 0)" />
+                    }
                 </RadzenStack>
             </RadzenStack>
         }
@@ -157,33 +168,85 @@
     [Inject]
     private DialogService Dialog { get; set; } = default!;
 
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.Facturation);
+
     private List<Facture> factures = new();
     private List<Patient> patients = new();
+    private List<FactureLigne> lignes = new();
+    private Facture? selectedFacture;
     private bool isEditing;
     private int editingId;
     private Facture model = new();
+    private string searchText = string.Empty;
+    private string selectedStatus = "Tous";
+    private List<string> statusOptions = new() { "Tous", "En attente", "Émise", "Partiellement payée", "Payée", "Annulée" };
+    private decimal paymentAmount;
+    private ModePaiement paymentMode = ModePaiement.Especes;
+    private string? paymentReference;
+
+    private IEnumerable<Facture> filteredFactures =>
+        factures.Where(f =>
+            (string.IsNullOrWhiteSpace(searchText)
+                || f.Numero.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+                || (f.Patient?.NomComplet?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true))
+            && (selectedStatus == "Tous" || GetStatusLabel(f.Statut) == selectedStatus));
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
     }
 
     private async Task Load()
     {
-        factures = await Db.Factures.Include(f => f.Patient).Include(f => f.Consultation).ToListAsync();
-        patients = await Db.Patients.ToListAsync();
+        factures = await Db.Factures
+            .Include(f => f.Patient)
+            .Include(f => f.Lignes)
+            .Include(f => f.Paiements)
+            .OrderByDescending(f => f.DateEmission)
+            .ToListAsync();
+        patients = await Db.Patients.OrderBy(p => p.Nom).ToListAsync();
     }
 
     private void OpenNew()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer une facture.");
+            return;
+        }
+
         editingId = 0;
         model = new Facture { DateEmission = DateTime.Today, Statut = StatutFacture.EnAttente };
+        lignes = new List<FactureLigne> { NewLigne() };
+        RecalculateTotal();
+        selectedFacture = null;
         isEditing = true;
     }
 
-    private void OpenEdit(Facture f)
+    private async Task OpenEdit(Facture f)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de modifier une facture.");
+            return;
+        }
+
         editingId = f.Id;
+        var facture = await Db.Factures.Include(x => x.Lignes).FirstOrDefaultAsync(x => x.Id == f.Id);
         model = new Facture
         {
             Id = f.Id,
@@ -198,30 +261,175 @@
             Notes = f.Notes,
             CreatedAt = f.CreatedAt
         };
+        lignes = (facture?.Lignes ?? Enumerable.Empty<FactureLigne>())
+            .Select(l => new FactureLigne
+            {
+                Id = l.Id,
+                FactureId = l.FactureId,
+                Designation = l.Designation,
+                Quantite = l.Quantite,
+                PrixUnitaire = l.PrixUnitaire
+            }).ToList();
+        if (lignes.Count == 0)
+        {
+            lignes.Add(NewLigne());
+        }
+        RecalculateTotal();
         isEditing = true;
+    }
+
+    private static FactureLigne NewLigne() => new() { Designation = string.Empty, Quantite = 1, PrixUnitaire = 0 };
+
+    private void AddLigne() => lignes.Add(NewLigne());
+
+    private void RemoveLigne(FactureLigne ligne)
+    {
+        lignes.Remove(ligne);
+        RecalculateTotal();
+    }
+
+    private void RecalculateTotal()
+    {
+        model.MontantTotal = lignes.Sum(l => l.Quantite * l.PrixUnitaire);
+    }
+
+    private async Task OpenPayments(Facture f)
+    {
+        selectedFacture = await Db.Factures
+            .Include(x => x.Patient)
+            .Include(x => x.Lignes)
+            .Include(x => x.Paiements)
+            .FirstOrDefaultAsync(x => x.Id == f.Id);
+        paymentAmount = selectedFacture?.MontantRestant > 0 ? selectedFacture.MontantRestant : 0;
+        paymentMode = ModePaiement.Especes;
+        paymentReference = null;
+        isEditing = false;
+    }
+
+    private async Task RegisterPayment()
+    {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer un paiement.");
+            return;
+        }
+
+        if (selectedFacture is null)
+        {
+            return;
+        }
+
+        var error = HospitalValidation.ValidatePayment(selectedFacture.MontantTotal, selectedFacture.MontantPaye, paymentAmount);
+        if (error is not null)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", error);
+            return;
+        }
+
+        var facture = await Db.Factures.FindAsync(selectedFacture.Id);
+        if (facture is null)
+        {
+            return;
+        }
+
+        Db.Paiements.Add(new Paiement
+        {
+            FactureId = facture.Id,
+            DatePaiement = DateTime.Now,
+            Montant = paymentAmount,
+            Mode = paymentMode,
+            Statut = StatutPaiement.Confirme,
+            Reference = paymentReference
+        });
+        facture.MontantPaye += paymentAmount;
+        facture.Statut = DeriveStatus(facture.MontantTotal, facture.MontantPaye);
+        facture.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        Notification.NotifySuccess($"Paiement de {paymentAmount:C2} enregistré.");
+        paymentAmount = 0;
+        paymentReference = null;
+        await Load();
+        await OpenPayments(facture);
     }
 
     private async Task Save()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer une facture.");
+            return;
+        }
+
+        RecalculateTotal();
+        model.Numero = await GenerateNumeroAsync(model.Numero);
+
+        var error = HospitalValidation.ValidateInvoice(model.Numero, model.PatientId, model.MontantTotal, model.MontantPaye);
+        if (error is not null)
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", error);
+            return;
+        }
+
+        if (lignes.Any(l => string.IsNullOrWhiteSpace(l.Designation) || l.Quantite <= 0 || l.PrixUnitaire < 0))
+        {
+            Notification.Notify(NotificationSeverity.Warning, "Validation", "Chaque ligne doit avoir une désignation, une quantité positive et un prix valide.");
+            return;
+        }
+
         if (editingId == 0)
         {
+            if (await Db.Factures.AnyAsync(f => f.Numero == model.Numero))
+            {
+                Notification.Notify(NotificationSeverity.Warning, "Validation", "Ce numéro de facture existe déjà.");
+                return;
+            }
+
+            model.Statut = DeriveStatus(model.MontantTotal, model.MontantPaye);
             Db.Factures.Add(model);
+            await Db.SaveChangesAsync();
+
+            foreach (var ligne in lignes)
+            {
+                ligne.Id = 0;
+                ligne.FactureId = model.Id;
+                Db.FactureLignes.Add(ligne);
+            }
         }
         else
         {
-            var existing = await Db.Factures.FindAsync(editingId);
-            if (existing != null)
+            var existing = await Db.Factures.Include(f => f.Lignes).FirstOrDefaultAsync(f => f.Id == editingId);
+            if (existing == null)
             {
-                existing.Numero = model.Numero;
-                existing.PatientId = model.PatientId;
-                existing.ConsultationId = model.ConsultationId;
-                existing.DateEmission = model.DateEmission;
-                existing.DateEcheance = model.DateEcheance;
-                existing.MontantTotal = model.MontantTotal;
-                existing.MontantPaye = model.MontantPaye;
-                existing.Statut = model.Statut;
-                existing.Notes = model.Notes;
-                existing.UpdatedAt = DateTime.UtcNow;
+                return;
+            }
+
+            if (await Db.Factures.AnyAsync(f => f.Id != editingId && f.Numero == model.Numero))
+            {
+                Notification.Notify(NotificationSeverity.Warning, "Validation", "Ce numéro de facture existe déjà.");
+                return;
+            }
+
+            existing.Numero = model.Numero;
+            existing.PatientId = model.PatientId;
+            existing.DateEmission = model.DateEmission;
+            existing.DateEcheance = model.DateEcheance;
+            existing.MontantTotal = model.MontantTotal;
+            existing.MontantPaye = model.MontantPaye;
+            existing.Statut = DeriveStatus(existing.MontantTotal, model.MontantPaye);
+            existing.Notes = model.Notes;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            Db.FactureLignes.RemoveRange(existing.Lignes);
+            foreach (var ligne in lignes)
+            {
+                Db.FactureLignes.Add(new FactureLigne
+                {
+                    FactureId = existing.Id,
+                    Designation = ligne.Designation,
+                    Quantite = ligne.Quantite,
+                    PrixUnitaire = ligne.PrixUnitaire
+                });
             }
         }
         await Db.SaveChangesAsync();
@@ -230,17 +438,93 @@
         await Load();
     }
 
+    private async Task<string> GenerateNumeroAsync(string? saisie)
+    {
+        if (!string.IsNullOrWhiteSpace(saisie))
+        {
+            return saisie.Trim();
+        }
+
+        var year = DateTime.UtcNow.Year;
+        var prefix = $"FAC-{year}-";
+        var maxNumero = await Db.Factures
+            .Where(f => f.Numero.StartsWith(prefix))
+            .OrderByDescending(f => f.Numero)
+            .Select(f => f.Numero)
+            .FirstOrDefaultAsync();
+
+        var next = 1;
+        if (!string.IsNullOrWhiteSpace(maxNumero) && int.TryParse(maxNumero[(prefix.Length)..], out var last))
+        {
+            next = last + 1;
+        }
+
+        return $"{prefix}{next:D4}";
+    }
+
+    private static StatutFacture DeriveStatus(decimal total, decimal paye) => (total, paye) switch
+    {
+        (_, _) when paye <= 0 => StatutFacture.Emise,
+        (_, _) when paye >= total && total > 0 => StatutFacture.Payee,
+        (_, _) when paye > 0 => StatutFacture.PartiellementPayee,
+        _ => StatutFacture.EnAttente
+    };
+
+    private static string GetStatusLabel(StatutFacture statut) => statut switch
+    {
+        StatutFacture.Emise => "Émise",
+        StatutFacture.PartiellementPayee => "Partiellement payée",
+        StatutFacture.Payee => "Payée",
+        StatutFacture.Annulee => "Annulée",
+        StatutFacture.EnAttente => "En attente",
+        _ => "En attente"
+    };
+
+    private static string GetStatusClass(StatutFacture statut) => statut switch
+    {
+        StatutFacture.Payee => "completed",
+        StatutFacture.PartiellementPayee => "confirmed",
+        StatutFacture.Annulee => "cancelled",
+        _ => "scheduled"
+    };
+
     private void Cancel() => isEditing = false;
 
     private async Task Delete(Facture f)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer une facture.");
+            return;
+        }
+
         if (!await Dialog.ConfirmDeleteAsync($"la facture {f.Numero}"))
         {
             return;
         }
 
-        Db.Factures.Remove(f);
+        var hasPayments = await Db.Paiements.AnyAsync(p => p.FactureId == f.Id);
+        if (hasPayments)
+        {
+            Notification.NotifyError("Suppression impossible : des paiements sont déjà rattachés à cette facture. Annulez-la plutôt que de la supprimer.");
+            return;
+        }
+
+        var facture = await Db.Factures.Include(x => x.Lignes).FirstOrDefaultAsync(x => x.Id == f.Id);
+        if (facture is null)
+        {
+            return;
+        }
+
+        Db.FactureLignes.RemoveRange(facture.Lignes);
+        Db.Factures.Remove(facture);
         await Db.SaveChangesAsync();
+
+        if (selectedFacture?.Id == f.Id)
+        {
+            selectedFacture = null;
+        }
+
         Notification.Notify(NotificationSeverity.Warning, "Supprimé", "La facture a été supprimée.");
         await Load();
     }

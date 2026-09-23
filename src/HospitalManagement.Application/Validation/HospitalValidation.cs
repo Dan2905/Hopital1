@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using HospitalManagement.Domain.Enums;
 
 namespace HospitalManagement.Application.Validation;
 
@@ -101,7 +102,7 @@ public static class HospitalValidation
         return startA < endB && startB < endA;
     }
 
-    public static string? ValidateEmail(string? email)
+        public static string? ValidateEmail(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
         {
@@ -117,5 +118,81 @@ public static class HospitalValidation
         {
             return "L'adresse e-mail n'est pas valide.";
         }
+    }
+
+    /// <summary>
+    /// Valide la cohérence d'un séjour hospitalier : patient et lit obligatoires,
+    /// dates d'entrée / sortie prévue / sortie réelle cohérentes avec le statut.
+    /// </summary>
+    public static string? ValidateAdmission(
+        int patientId,
+        int? litId,
+        int? chambreId,
+        DateTime dateEntree,
+        DateTime? dateSortiePrevue,
+        DateTime? dateSortie,
+        StatutAdmission statut)
+    {
+        if (patientId <= 0)
+        {
+            return "Le patient est obligatoire.";
+        }
+
+        if (litId is null or <= 0)
+        {
+            return "Le lit est obligatoire.";
+        }
+
+        if (chambreId is null or <= 0)
+        {
+            return "La chambre est obligatoire.";
+        }
+
+        if (dateEntree == default)
+        {
+            return "La date d'entrée est obligatoire.";
+        }
+
+        if (dateEntree.Date > DateTime.Today)
+        {
+            return "La date d'entrée ne peut pas être dans le futur.";
+        }
+
+        if (dateSortiePrevue.HasValue && dateSortiePrevue.Value.Date < dateEntree.Date)
+        {
+            return "La date de sortie prévue ne peut pas être antérieure à la date d'entrée.";
+        }
+
+        if (dateSortie.HasValue && dateSortie.Value.Date < dateEntree.Date)
+        {
+            return "La date de sortie ne peut pas être antérieure à la date d'entrée.";
+        }
+
+        if (statut == StatutAdmission.EnCours && dateSortie.HasValue)
+        {
+            return "Un séjour en cours ne peut pas avoir de date de sortie.";
+        }
+
+        if (statut == StatutAdmission.Sorti && !dateSortie.HasValue)
+        {
+            return "Un séjour sorti doit avoir une date de sortie.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Détecte le chevauchement de deux séjours sur un même lit.
+    /// Un séjour encore ouvert est considéré comme se prolongeant indéfiniment.
+    /// </summary>
+    public static bool HasOverlappingStay(
+        DateTime entreeA,
+        DateTime? sortieA,
+        DateTime entreeB,
+        DateTime? sortieB)
+    {
+        var finA = sortieA ?? DateTime.MaxValue;
+        var finB = sortieB ?? DateTime.MaxValue;
+        return entreeA < finB && entreeB < finA;
     }
 }

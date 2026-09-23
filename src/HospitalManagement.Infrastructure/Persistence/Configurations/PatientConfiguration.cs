@@ -43,6 +43,10 @@ public class AdmissionConfiguration : IEntityTypeConfiguration<Admission>
         builder.Property(a => a.Diagnostic).HasMaxLength(500);
         builder.Property(a => a.MedecinResponsable).HasMaxLength(150);
 
+        // Recherche des séjours par lit / patient et contrôle des chevauchements.
+        builder.HasIndex(a => new { a.LitId, a.Statut });
+        builder.HasIndex(a => new { a.PatientId, a.DateEntree });
+
         builder.HasOne(a => a.Patient)
             .WithMany(p => p.Admissions)
             .HasForeignKey(a => a.PatientId)

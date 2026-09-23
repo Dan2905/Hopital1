@@ -87,7 +87,7 @@ public static class AppModuleCatalog
         "badge",
         "Équipes médicales, administratives et plannings",
         "purple",
-        RoleNames.AdministrationOnly);
+                RoleNames.AdministrationOnly);
 
     public static AppModule Facturation { get; } = new(
         "Facturation",
@@ -97,6 +97,22 @@ public static class AppModuleCatalog
         "orange",
         RoleNames.Facturation);
 
+    public static AppModule Admissions { get; } = new(
+        "Admissions",
+        "/admissions",
+        "local_hospital",
+        "Séjours hospitaliers, lits occupés et transferts",
+        "green",
+        RoleNames.ParcoursPatient);
+
+    public static AppModule Rapports { get; } = new(
+        "Rapports",
+        "/rapports",
+        "insights",
+        "Indicateurs, statistiques et exports",
+        "purple",
+        RoleNames.Rapports);
+
     public static AppModule Roles { get; } = new(
         "Gestion des rôles",
         "/roles",
@@ -105,25 +121,27 @@ public static class AppModuleCatalog
         "purple",
         RoleNames.AdministrationOnly);
 
-    /// <summary>Tous les modules, dans l'ordre d'affichage de la navigation.</summary>
+            /// <summary>Tous les modules, dans l'ordre d'affichage de la navigation.</summary>
     public static IReadOnlyList<AppModule> Modules { get; } =
     [
         Dashboard,
         Patients,
         RendezVous,
         Chambres,
+        Admissions,
         Laboratoire,
         Pharmacie,
         Personnel,
         Facturation,
+        Rapports,
         Roles
     ];
 
     /// <summary>Sections de la barre latérale.</summary>
     public static IReadOnlyList<NavSection> Sections { get; } =
     [
-        new NavSection("Pilotage", [Dashboard]),
-        new NavSection("Parcours patient", [Patients, RendezVous, Chambres]),
+        new NavSection("Pilotage", [Dashboard, Rapports]),
+        new NavSection("Parcours patient", [Patients, RendezVous, Chambres, Admissions]),
         new NavSection("Services médicaux", [Laboratoire, Pharmacie]),
         new NavSection("Administration", [Personnel, Facturation, Roles])
     ];
@@ -135,7 +153,7 @@ public static class AppModuleCatalog
     /// <summary>
     /// Détermine si un module donné peut être affiché pour l'utilisateur connecté.
     /// </summary>
-    public static bool MayAccess(AppModule module, ClaimsPrincipal user)
+    public static bool MayAccess(AppModule module, ClaimsPrincipal? user)
     {
         if (module.AllowedRoles is null or { Count: 0 })
         {

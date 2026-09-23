@@ -1,5 +1,7 @@
 @page "/patients"
 @attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Gestion des Patients</PageTitle>
 
@@ -9,7 +11,10 @@
             <p class="eyebrow">Gestion</p>
             <h2>Patients</h2>
         </div>
-        <RadzenButton Text="Nouveau patient" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+        @if (CanWrite)
+        {
+            <RadzenButton Text="Nouveau patient" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+        }
     </div>
 
     @if (isEditing)
@@ -110,8 +115,11 @@
                         <RadzenDataGridColumn Title="Actions" Sortable="false" Filterable="false" Width="170px">
                             <Template Context="patient">
                                 <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OpenDetails(patient))" />
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(patient))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(patient))" />
+                                @if (CanWrite)
+                                {
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(patient))" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(patient))" />
+                                }
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -177,6 +185,9 @@
     [Inject]
     private DialogService Dialog { get; set; } = default!;
 
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
     private List<Patient> patients = new();
     private List<string> statusOptions = new() { "Tous", "Actif", "Inactif", "Décédé", "Transféré" };
     private bool isEditing;
@@ -185,6 +196,9 @@
     private string selectedStatus = "Tous";
     private Patient model = new();
     private Patient? selectedPatient;
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.ParcoursPatient);
 
     private IEnumerable<Patient> filteredPatients =>
         patients.Where(p =>
@@ -195,6 +209,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
         if (patients.Count > 0)
         {
@@ -212,6 +235,12 @@
 
     private void OpenNew()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer un patient.");
+            return;
+        }
+
         editingId = 0;
         model = new Patient
         {
@@ -225,6 +254,12 @@
 
     private void OpenEdit(Patient patient)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de modifier un patient.");
+            return;
+        }
+
         editingId = patient.Id;
         model = new Patient
         {
@@ -255,6 +290,12 @@
 
     private async Task Save()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer un patient.");
+            return;
+        }
+
         var validationError = HospitalValidation.ValidatePatient(
             model.Prenom,
             model.Nom,
@@ -374,6 +415,12 @@
 
     private async Task Delete(Patient patient)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer un patient.");
+            return;
+        }
+
         if (!await Dialog.ConfirmDeleteAsync($"le patient {patient.NomComplet}", "Les rendez-vous, factures et dossiers associés bloqueront la suppression tant qu'ils existent."))
         {
             return;

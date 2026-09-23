@@ -876,11 +876,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
+      "projectUniqueName": "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
       "projectName": "HospitalManagement.Application.Tests",
-      "projectPath": "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
+      "projectPath": "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\HospitalManagement.Application.Tests.csproj",
       "packagesPath": "C:\\Users\\divulu\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\obj\\",
+      "outputPath": "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\tests\\HospitalManagement.Application.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\divulu\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -896,8 +896,8 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\src\\HospitalManagement.Application\\HospitalManagement.Application.csproj": {
-              "projectPath": "C:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\src\\HospitalManagement.Application\\HospitalManagement.Application.csproj"
+            "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\src\\HospitalManagement.Application\\HospitalManagement.Application.csproj": {
+              "projectPath": "c:\\Users\\divulu\\Desktop\\Dev\\Gestion_Hopital\\src\\HospitalManagement.Application\\HospitalManagement.Application.csproj"
             }
           }
         }

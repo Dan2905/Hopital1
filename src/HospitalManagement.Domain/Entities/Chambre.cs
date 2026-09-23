@@ -37,6 +37,7 @@ public class Admission : BaseEntity
     public int? ChambreId { get; set; }
     public Chambre? Chambre { get; set; }
     public DateTime DateEntree { get; set; }
+    public DateTime? DateSortiePrevue { get; set; }
     public DateTime? DateSortie { get; set; }
     public string? MotifAdmission { get; set; }
     public string? Diagnostic { get; set; }

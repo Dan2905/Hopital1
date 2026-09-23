@@ -120,7 +120,7 @@
     private static string GetDisplayName(ApplicationUser u)
     {
         var name = $"{u.Prenom} {u.Nom}".Trim();
-        return string.IsNullOrEmpty(name) ? u.Email : name;
+        return string.IsNullOrEmpty(name) ? u.Email ?? "?" : name;
     }
 
     private static string GetRoleTone(string role) => role switch

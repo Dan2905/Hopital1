@@ -31,9 +31,9 @@ public static class SecurityHelper
     /// <summary>
     /// Extrait les initiales du compte connecté pour l'affichage dans le menu.
     /// </summary>
-    public static string GetInitials(ClaimsPrincipal user)
+    public static string GetInitials(ClaimsPrincipal? user)
     {
-        var name = user.Identity?.Name;
+        var name = user?.Identity?.Name;
         if (string.IsNullOrWhiteSpace(name))
         {
             return "?";

@@ -1,10 +1,9 @@
 ﻿@page "/"
 @attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
 @using System.Globalization
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
 @using HospitalManagement.Web.Components.Layout
-@inject AuthenticationStateProvider AuthState
-@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Tableau de bord — Gestion hospitalière</PageTitle>
 
@@ -42,45 +41,57 @@
     </div>
 
     <section class="kpi-grid">
-        <a class="kpi-card blue" href="patients">
-            <div class="kpi-head">
-                <span class="kpi-icon"><RadzenIcon Icon="people" /></span>
-                <span class="kpi-label">Patients</span>
-            </div>
-            <div class="kpi-value">@snapshot.TotalPatients</div>
-            <div class="kpi-trend neutral">@snapshot.ActivePatients dossiers actifs</div>
-        </a>
+        @if (CanAccessPatients)
+        {
+            <a class="kpi-card blue" href="patients">
+                <div class="kpi-head">
+                    <span class="kpi-icon"><RadzenIcon Icon="people" /></span>
+                    <span class="kpi-label">Patients</span>
+                </div>
+                <div class="kpi-value">@snapshot.TotalPatients</div>
+                <div class="kpi-trend neutral">@snapshot.ActivePatients dossiers actifs</div>
+            </a>
+        }
 
-        <a class="kpi-card purple" href="rendezvous">
-            <div class="kpi-head">
-                <span class="kpi-icon"><RadzenIcon Icon="event_available" /></span>
-                <span class="kpi-label">Rendez-vous du jour</span>
-            </div>
-            <div class="kpi-value">@snapshot.TodayAppointments</div>
-            <div class="kpi-trend neutral">@snapshot.UpcomingAppointments à venir</div>
-        </a>
+        @if (CanAccessRendezVous)
+        {
+            <a class="kpi-card purple" href="rendezvous">
+                <div class="kpi-head">
+                    <span class="kpi-icon"><RadzenIcon Icon="event_available" /></span>
+                    <span class="kpi-label">Rendez-vous du jour</span>
+                </div>
+                <div class="kpi-value">@snapshot.TodayAppointments</div>
+                <div class="kpi-trend neutral">@snapshot.UpcomingAppointments à venir</div>
+            </a>
+        }
 
-        <a class="kpi-card green" href="chambres">
-            <div class="kpi-head">
-                <span class="kpi-icon"><RadzenIcon Icon="hotel" /></span>
-                <span class="kpi-label">Occupation des lits</span>
-            </div>
-            <div class="kpi-value">@snapshot.OccupancyRate %</div>
-            <div class="kpi-trend neutral">
-                @snapshot.OccupiedBeds occupés sur @snapshot.TotalBeds
-            </div>
-        </a>
+        @if (CanAccessChambres)
+        {
+            <a class="kpi-card green" href="chambres">
+                <div class="kpi-head">
+                    <span class="kpi-icon"><RadzenIcon Icon="hotel" /></span>
+                    <span class="kpi-label">Occupation des lits</span>
+                </div>
+                <div class="kpi-value">@snapshot.OccupancyRate %</div>
+                <div class="kpi-trend neutral">
+                    @snapshot.OccupiedBeds occupés sur @snapshot.TotalBeds
+                </div>
+            </a>
+        }
 
-        <a class="kpi-card orange" href="facturation">
-            <div class="kpi-head">
-                <span class="kpi-icon"><RadzenIcon Icon="payments" /></span>
-                <span class="kpi-label">Encaissé ce mois</span>
-            </div>
-            <div class="kpi-value">@FormatAmount(snapshot.MonthRevenue)</div>
-            <div class="kpi-trend neutral">
-                @snapshot.UnpaidInvoices factures à recouvrer
-            </div>
-        </a>
+        @if (User.CanAccessAny(AppModuleCatalog.Facturation))
+        {
+            <a class="kpi-card orange" href="facturation">
+                <div class="kpi-head">
+                    <span class="kpi-icon"><RadzenIcon Icon="payments" /></span>
+                    <span class="kpi-label">Encaissé ce mois</span>
+                </div>
+                <div class="kpi-value">@FormatAmount(snapshot.MonthRevenue)</div>
+                <div class="kpi-trend neutral">
+                    @snapshot.UnpaidInvoices factures à recouvrer
+                </div>
+            </a>
+        }
     </section>
 
     <section class="panel quick-access-panel">
@@ -309,44 +320,53 @@
     </section>
 
     <section class="report-grid" aria-label="Rapports de synthèse">
-        <article class="panel report-panel">
-            <div class="panel-header compact">
-                <div>
-                    <p class="panel-kicker">Finance</p>
-                    <h2>Revenus du mois</h2>
+        @if (User.CanAccessAny(AppModuleCatalog.Facturation))
+        {
+            <article class="panel report-panel">
+                <div class="panel-header compact">
+                    <div>
+                        <p class="panel-kicker">Finance</p>
+                        <h2>Revenus du mois</h2>
+                    </div>
+                    <RadzenIcon Icon="payments" />
                 </div>
-                <RadzenIcon Icon="payments" />
-            </div>
-            <strong class="report-value">@FormatAmount(snapshot.MonthRevenue)</strong>
-            <p class="report-caption">@FormatAmount(snapshot.OutstandingAmount) restent à recouvrer.</p>
-            <a class="report-link" href="facturation">Voir la facturation <RadzenIcon Icon="arrow_forward" /></a>
-        </article>
+                <strong class="report-value">@FormatAmount(snapshot.MonthRevenue)</strong>
+                <p class="report-caption">@FormatAmount(snapshot.OutstandingAmount) restent à recouvrer.</p>
+                <a class="report-link" href="facturation">Voir la facturation <RadzenIcon Icon="arrow_forward" /></a>
+            </article>
+        }
 
-        <article class="panel report-panel">
-            <div class="panel-header compact">
-                <div>
-                    <p class="panel-kicker">Activité médicale</p>
-                    <h2>Consultations</h2>
+        @if (CanAccessRendezVous)
+        {
+            <article class="panel report-panel">
+                <div class="panel-header compact">
+                    <div>
+                        <p class="panel-kicker">Activité médicale</p>
+                        <h2>Consultations</h2>
+                    </div>
+                    <RadzenIcon Icon="monitor_heart" />
                 </div>
-                <RadzenIcon Icon="monitor_heart" />
-            </div>
-            <strong class="report-value">@TotalConsultations</strong>
-            <p class="report-caption">Consultations enregistrées sur les six derniers mois.</p>
-            <a class="report-link" href="rendezvous">Voir l'agenda <RadzenIcon Icon="arrow_forward" /></a>
-        </article>
+                <strong class="report-value">@TotalConsultations</strong>
+                <p class="report-caption">Consultations enregistrées sur les six derniers mois.</p>
+                <a class="report-link" href="rendezvous">Voir l'agenda <RadzenIcon Icon="arrow_forward" /></a>
+            </article>
+        }
 
-        <article class="panel report-panel">
-            <div class="panel-header compact">
-                <div>
-                    <p class="panel-kicker">Stocks</p>
-                    <h2>Alertes actives</h2>
+        @if (User.CanAccessAny(AppModuleCatalog.Pharmacie))
+        {
+            <article class="panel report-panel">
+                <div class="panel-header compact">
+                    <div>
+                        <p class="panel-kicker">Stocks</p>
+                        <h2>Alertes actives</h2>
+                    </div>
+                    <RadzenIcon Icon="inventory_2" />
                 </div>
-                <RadzenIcon Icon="inventory_2" />
-            </div>
-            <strong class="report-value">@snapshot.LowStockMedicines</strong>
-            <p class="report-caption">Médicaments sous leur seuil minimum.</p>
-            <a class="report-link" href="pharmacie">Gérer les stocks <RadzenIcon Icon="arrow_forward" /></a>
-        </article>
+                <strong class="report-value">@snapshot.LowStockMedicines</strong>
+                <p class="report-caption">Médicaments sous leur seuil minimum.</p>
+                <a class="report-link" href="pharmacie">Gérer les stocks <RadzenIcon Icon="arrow_forward" /></a>
+            </article>
+        }
     </section>
 </div>
 
@@ -355,6 +375,12 @@
 
     [Inject]
     private DashboardService Dashboard { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    [Inject]
+    private UserManager<ApplicationUser> UserManagerService { get; set; } = default!;
 
     private DashboardSnapshot snapshot = DashboardSnapshot.Empty;
     private IReadOnlyDictionary<string, ModuleMetric> moduleMetrics =
@@ -401,18 +427,25 @@
 
     private async Task LoadCurrentUserAsync()
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        currentUser = state.User;
-
-        if (currentUser.Identity?.IsAuthenticated != true)
+        try
         {
-            return;
+            var state = await AuthStateProvider.GetAuthenticationStateAsync();
+            currentUser = state.User;
+
+            if (currentUser.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            var user = await UserManagerService.GetUserAsync(currentUser);
+            if (user is not null && !string.IsNullOrWhiteSpace(user.Prenom))
+            {
+                userFirstName = user.Prenom;
+            }
         }
-
-        var user = await UserManager.GetUserAsync(currentUser);
-        if (user is not null && !string.IsNullOrWhiteSpace(user.Prenom))
+        catch (InvalidOperationException)
         {
-            userFirstName = user.Prenom;
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
         }
     }
 
@@ -427,5 +460,5 @@
 
     private sealed record ModuleMetric(int Value, string Caption);
 
-    private ClaimsPrincipal User => currentUser!;
+    private ClaimsPrincipal User => currentUser ?? new ClaimsPrincipal(new ClaimsIdentity());
 }

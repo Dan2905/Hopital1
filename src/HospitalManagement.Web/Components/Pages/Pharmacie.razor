@@ -1,12 +1,17 @@
 @page "/pharmacie"
 @attribute [Authorize(Roles = "Admin,Medecin,Pharmacien")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Pharmacie</PageTitle>
 
 <div class="page-card">
     <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
         <RadzenHeading Size="HeadingSize.H3">Pharmacie</RadzenHeading>
-        <RadzenButton Text="Nouveau médicament" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+                @if (CanWrite)
+        {
+            <RadzenButton Text="Nouveau médicament" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNew())" />
+        }
     </RadzenStack>
 
     @if (isEditing)
@@ -55,8 +60,11 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Title="">
                     <Template>
+                                            @if (CanWrite)
+                    {
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEdit(context))" />
                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(context))" />
+                    }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -74,6 +82,13 @@
     [Inject]
     private DialogService Dialog { get; set; } = default!;
 
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.Pharmacie);
+
     private List<Medicament> medicaments = new();
     private List<Fournisseur> fournisseurs = new();
     private bool isEditing;
@@ -82,6 +97,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
     }
 
@@ -93,6 +117,12 @@
 
     private void OpenNew()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer un médicament.");
+            return;
+        }
+
         editingId = 0;
         model = new Medicament { EstActif = true, SeuilAlerte = 10 };
         isEditing = true;
@@ -100,6 +130,12 @@
 
     private void OpenEdit(Medicament m)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de modifier un médicament.");
+            return;
+        }
+
         editingId = m.Id;
         model = new Medicament
         {
@@ -123,6 +159,12 @@
 
     private async Task Save()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer un médicament.");
+            return;
+        }
+
         if (editingId == 0)
         {
             Db.Medicaments.Add(model);
@@ -157,6 +199,12 @@
 
     private async Task Delete(Medicament m)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer un médicament.");
+            return;
+        }
+
         if (!await Dialog.ConfirmDeleteAsync($"le médicament {m.Nom}"))
         {
             return;

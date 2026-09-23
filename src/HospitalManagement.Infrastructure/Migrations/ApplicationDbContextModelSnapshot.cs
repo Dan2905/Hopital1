@@ -42,6 +42,9 @@ namespace HospitalManagement.Infrastructure.Migrations
                     b.Property<DateTime?>("DateSortie")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DateSortiePrevue")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Diagnostic")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -70,9 +73,9 @@ namespace HospitalManagement.Infrastructure.Migrations
 
                     b.HasIndex("ChambreId");
 
-                    b.HasIndex("LitId");
+                    b.HasIndex("LitId", "Statut");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("PatientId", "DateEntree");
 
                     b.ToTable("Admissions", (string)null);
                 });

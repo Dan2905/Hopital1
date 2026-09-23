@@ -1,12 +1,17 @@
 @page "/chambres"
 @attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Chambres & Lits</PageTitle>
 
 <div class="page-card">
     <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="margin-bottom: 16px;">
         <RadzenHeading Size="HeadingSize.H3">Chambres & Lits</RadzenHeading>
-        <RadzenButton Text="Nouvelle chambre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNewChambre())" />
+                @if (CanWrite)
+        {
+            <RadzenButton Text="Nouvelle chambre" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenNewChambre())" />
+        }
     </RadzenStack>
 
     @if (isEditing)
@@ -62,8 +67,11 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Title="">
                     <Template>
+                                            @if (CanWrite)
+                    {
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenEditChambre(context))" />
                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => DeleteChambre(context))" />
+                    }
                     </Template>
                 </RadzenDataGridColumn>
             </Columns>
@@ -78,8 +86,15 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
-    [Inject]
+        [Inject]
     private DialogService Dialog { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.ParcoursPatient);
 
     private List<Chambre> chambres = new();
     private List<Lit> lits = new();
@@ -87,8 +102,17 @@
     private int editingChambreId;
     private Chambre chambreModel = new();
 
-    protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
     }
 
@@ -101,16 +125,28 @@
             .ToListAsync();
     }
 
-    private void OpenNewChambre()
+        private void OpenNewChambre()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer une chambre.");
+            return;
+        }
+
         editingChambreId = 0;
         chambreModel = new Chambre { Type = TypeChambre.Simple, Statut = StatutChambre.Libre };
         lits = new();
         isEditing = true;
     }
 
-    private void OpenEditChambre(Chambre c)
+        private void OpenEditChambre(Chambre c)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de modifier une chambre.");
+            return;
+        }
+
         editingChambreId = c.Id;
         chambreModel = new Chambre
         {
@@ -134,8 +170,13 @@
 
     private void RemoveLit(Lit lit) => lits.Remove(lit);
 
-    private async Task SaveChambre()
+        private async Task SaveChambre()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer une chambre.");
+            return;
+        }
         if (string.IsNullOrWhiteSpace(chambreModel.Numero))
         {
             Notification.Notify(NotificationSeverity.Warning, "Validation", "Le numéro de chambre est obligatoire.");
@@ -241,8 +282,13 @@
 
     private void CancelChambre() => isEditing = false;
 
-    private async Task DeleteChambre(Chambre c)
+        private async Task DeleteChambre(Chambre c)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer une chambre.");
+            return;
+        }
         if (!await Dialog.ConfirmDeleteAsync($"la chambre {c.Numero}", "La chambre doit être vide avant sa suppression."))
         {
             return;

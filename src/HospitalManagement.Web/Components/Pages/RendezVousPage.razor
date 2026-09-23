@@ -1,5 +1,7 @@
 @page "/rendezvous"
 @attribute [Authorize(Roles = "Admin,Medecin,Infirmier,Receptionniste")]
+@using System.Security.Claims
+@using HospitalManagement.Web.Components.Layout
 
 <PageTitle>Rendez-vous & Consultations</PageTitle>
 
@@ -9,7 +11,10 @@
             <p class="eyebrow">Agenda</p>
             <h2>Rendez-vous</h2>
         </div>
-        <RadzenButton Text="Nouveau rendez-vous" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+        @if (CanWrite)
+        {
+            <RadzenButton Text="Nouveau rendez-vous" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@OpenNew" />
+        }
     </div>
 
     @if (isEditing)
@@ -97,14 +102,17 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn Title="Actions" Sortable="false" Filterable="false" Width="210px">
                             <Template Context="rdv">
-                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OpenDetails(rdv))" />
-                                @if (rdv.Statut is StatutRendezVous.Planifie or StatutRendezVous.Confirme)
+                                                                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => OpenDetails(rdv))" />
+                                @if (CanWrite)
                                 {
-                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Marquer terminé" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Termine))" />
-                                    <RadzenButton Icon="cancel" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Annuler" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Annule))" />
+                                    @if (rdv.Statut is StatutRendezVous.Planifie or StatutRendezVous.Confirme)
+                                    {
+                                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Marquer terminé" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Termine))" />
+                                        <RadzenButton Icon="cancel" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" Style="margin-left: 6px;" Title="Annuler" Click="@(() => ChangeStatus(rdv, StatutRendezVous.Annule))" />
+                                    }
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(rdv))" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(rdv))" />
                                 }
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => OpenEdit(rdv))" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Style="margin-left: 6px;" Click="@(() => Delete(rdv))" />
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -166,8 +174,15 @@
     [Inject]
     private NotificationService Notification { get; set; } = default!;
 
-    [Inject]
+        [Inject]
     private DialogService Dialog { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    private ClaimsPrincipal currentUser = new(new ClaimsIdentity());
+
+    private bool CanWrite => currentUser.IsInAnyRole(RoleNames.ParcoursPatient);
 
     private List<RendezVous> rendezVous = new();
     private List<Patient> patients = new();
@@ -189,8 +204,17 @@
                 || GetPersonnelDisplayName(r.Personnel).Contains(searchText, StringComparison.OrdinalIgnoreCase))
             && (selectedStatus == "Tous" || GetStatusLabel(r.Statut) == selectedStatus));
 
-    protected override async Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            currentUser = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        }
+        catch (InvalidOperationException)
+        {
+            currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        }
+
         await Load();
         if (rendezVous.Count > 0)
         {
@@ -210,8 +234,14 @@
         personnels = await Db.Personnels.ToListAsync();
     }
 
-    private void OpenNew()
+        private void OpenNew()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de créer un rendez-vous.");
+            return;
+        }
+
         editingId = 0;
         model = new RendezVous
         {
@@ -249,8 +279,14 @@
         isEditing = false;
     }
 
-    private async Task Save()
+        private async Task Save()
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas d'enregistrer un rendez-vous.");
+            return;
+        }
+
         var validationError = HospitalValidation.ValidateAppointment(
             model.PatientId,
             model.PersonnelId,
@@ -315,8 +351,14 @@
         selectedRendezVous ??= rendezVous.FirstOrDefault();
     }
 
-    private async Task Delete(RendezVous rdv)
+        private async Task Delete(RendezVous rdv)
     {
+        if (!CanWrite)
+        {
+            Notification.NotifyWarning("Votre rôle ne permet pas de supprimer un rendez-vous.");
+            return;
+        }
+
         if (!await Dialog.ConfirmDeleteAsync("ce rendez-vous"))
         {
             return;
